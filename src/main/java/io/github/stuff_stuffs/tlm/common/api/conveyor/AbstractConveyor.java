@@ -5,6 +5,7 @@ import net.minecraft.util.math.Direction;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 public abstract class AbstractConveyor implements ConveyorAccess {
     private static final Comparator<Entry> COMPARATOR = Comparator.comparingDouble(entry -> entry.pos);
@@ -51,15 +52,15 @@ public abstract class AbstractConveyor implements ConveyorAccess {
             case NONE -> false;
             case START, START_OVERRIDE -> {
                 updateCache();
-                final float minPos = computeMinPos();
-                if (minPos > 0) {
+                final float minPos = Math.max(computeMinPos(), -ConveyorTray.TRAY_SIZE/2.0F);
+                if (minPos > ConveyorTray.TRAY_SIZE / 2.0F) {
                     yield false;
                 }
                 final float maxPos = Math.min(computeMaxPos(), getLastPos());
                 if (!MathUtil.greaterThan(maxPos, minPos)) {
                     yield false;
                 }
-                final Entry entry = new Entry(tray, 0, 1-usedTick);
+                final Entry entry = new Entry(tray, minPos, 1 - usedTick);
                 final int index = getInsertIndex(entries, entry, COMPARATOR);
                 entries.add(index, entry);
                 updatePosition(entry, mode == InsertMode.START_OVERRIDE);
@@ -69,7 +70,7 @@ public abstract class AbstractConveyor implements ConveyorAccess {
                 updateCache();
                 final float minPos = computeMinPos();
                 final float maxPos = Math.min(computeMaxPos(), getLastPos());
-                if (MathUtil.lessThan(maxPos - minPos, ConveyorTray.TRAY_SIZE)) {
+                if (!MathUtil.greaterThan(maxPos, minPos) && !MathUtil.equalTo(maxPos, minPos)) {
                     yield false;
                 }
                 final Entry entry = new Entry(tray, minPos, 1 - usedTick);
@@ -82,8 +83,10 @@ public abstract class AbstractConveyor implements ConveyorAccess {
     }
 
     protected float getLastPos() {
-        return entries.isEmpty() ? Float.POSITIVE_INFINITY : entries.get(entries.size() - 1).pos;
+        return entries.isEmpty() ? Float.POSITIVE_INFINITY : entries.get(entries.size() - 1).pos - ConveyorTray.TRAY_SIZE;
     }
+
+    public abstract void setup(Supplier<ConveyorLike> inputConveyorLikeCache, Supplier<ConveyorLike> outputConveyorLikeCache, Supplier<Conveyor> outputConveyorCache);
 
     private static <T> int getInsertIndex(final List<? extends T> list, final T toInsert, final Comparator<? super T> comparator) {
         int low = 0;
@@ -110,7 +113,7 @@ public abstract class AbstractConveyor implements ConveyorAccess {
                 entry.tickRemaining = 1.0F;
             }
         }
-        final float maxPos = computeMaxPos() - MathUtil.EPSILON;
+        final float maxPos = computeMaxPos();
         int i = 0;
         int entryCount = entries.size();
         while (i < entryCount) {
@@ -123,10 +126,11 @@ public abstract class AbstractConveyor implements ConveyorAccess {
             boolean skip = false;
             if (MathUtil.greaterThan(nextPos, maxPos)) {
                 final float tickUsed = (nextPos - maxPos) / movement;
+                entries.remove(i);
                 if (tryAdvance(entry, tickUsed)) {
-                    entries.remove(i);
                     skip = true;
                 } else {
+                    entries.add(i, entry);
                     nextPos = maxPos;
                 }
             }
@@ -134,9 +138,7 @@ public abstract class AbstractConveyor implements ConveyorAccess {
                 entryCount = entryCount - 1;
             } else {
                 entry.pos = nextPos;
-                if (entry.tickRemaining > 0) {
-                    updatePosition(entry, false);
-                }
+                updatePosition(entry, false);
                 entry.tickRemaining = -1;
                 i++;
             }

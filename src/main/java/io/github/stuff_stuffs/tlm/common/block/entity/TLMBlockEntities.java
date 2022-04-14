@@ -13,6 +13,7 @@ public final class TLMBlockEntities {
     public static void init() {
         Registry.register(Registry.BLOCK_ENTITY_TYPE, TLM.createId("conveyor"), CONVEYOR_BLOCK_ENTITY_TYPE);
         ConveyorApi.CONVEYOR_ACCESS_BLOCK_API_LOOKUP.registerForBlockEntity((blockEntity, unused) -> blockEntity.getConveyorAccess(), CONVEYOR_BLOCK_ENTITY_TYPE);
+        ConveyorApi.CONVEYOR_LIKE_BLOCK_API_LOOKUP.registerForBlockEntity(ConveyorBlockEntity::getConveyor, CONVEYOR_BLOCK_ENTITY_TYPE);
         ConveyorApi.CONVEYOR_BLOCK_API_LOOKUP.registerForBlockEntity(ConveyorSupplier::getConveyor, CONVEYOR_BLOCK_ENTITY_TYPE);
     }
 

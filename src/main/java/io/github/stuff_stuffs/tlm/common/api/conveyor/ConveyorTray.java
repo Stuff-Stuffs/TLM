@@ -11,7 +11,7 @@ import net.minecraft.util.math.Vec3d;
 import java.util.Optional;
 
 public final class ConveyorTray {
-    public static final float TRAY_SIZE = 0.5F;
+    public static final float TRAY_SIZE = 0.75F;
     private ConveyedResource<?, ?> resource;
     private Vec3d lastPos = Vec3d.ZERO;
     private Vec3d currentPos = Vec3d.ZERO;
