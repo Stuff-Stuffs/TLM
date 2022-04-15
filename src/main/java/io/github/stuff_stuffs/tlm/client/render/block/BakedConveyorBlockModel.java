@@ -1,7 +1,7 @@
 package io.github.stuff_stuffs.tlm.client.render.block;
 
 import io.github.stuff_stuffs.tlm.client.render.conveyor.ConveyorRenderer;
-import io.github.stuff_stuffs.tlm.common.block.properties.ConveyorOrientation;
+import io.github.stuff_stuffs.tlm.common.api.conveyor.ConveyorOrientation;
 import io.github.stuff_stuffs.tlm.common.block.properties.TLMBlockProperties;
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
 import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
@@ -23,6 +23,14 @@ import java.util.List;
 import java.util.function.Supplier;
 
 public class BakedConveyorBlockModel implements BakedModel, FabricBakedModel {
+    private final Sprite sprite;
+    private final ConveyorRenderer renderer;
+
+    public BakedConveyorBlockModel(final Sprite sprite, final Sprite clockWiseSprite, final Sprite counterClockWiseSprite) {
+        this.sprite = sprite;
+        renderer = new ConveyorRenderer(1, 1, sprite, clockWiseSprite, counterClockWiseSprite);
+    }
+
     @Override
     public boolean isVanillaAdapter() {
         return false;
@@ -31,17 +39,21 @@ public class BakedConveyorBlockModel implements BakedModel, FabricBakedModel {
     @Override
     public void emitBlockQuads(final BlockRenderView blockView, final BlockState state, final BlockPos pos, final Supplier<AbstractRandom> randomSupplier, final RenderContext context) {
         final ConveyorOrientation orientation = state.get(TLMBlockProperties.CONVEYOR_ORIENTATION_PROPERTY);
-        ConveyorRenderer.render(1, 1, orientation, context);
+        context.meshConsumer().accept(renderer.getMesh(orientation));
     }
 
     @Override
     public void emitItemQuads(final ItemStack stack, final Supplier<AbstractRandom> randomSupplier, final RenderContext context) {
-        ConveyorRenderer.render(1, 1, ConveyorOrientation.NORTH, context);
+        context.meshConsumer().accept(renderer.getMesh(ConveyorOrientation.NORTH));
     }
 
     @Override
     public List<BakedQuad> getQuads(@Nullable final BlockState state, @Nullable final Direction face, final AbstractRandom random) {
-        throw new UnsupportedOperationException();
+        if (state == null) {
+            return List.of();
+        }
+        final ConveyorOrientation orientation = state.get(TLMBlockProperties.CONVEYOR_ORIENTATION_PROPERTY);
+        return renderer.getQuads(orientation, face);
     }
 
     @Override
@@ -66,7 +78,7 @@ public class BakedConveyorBlockModel implements BakedModel, FabricBakedModel {
 
     @Override
     public Sprite getParticleSprite() {
-        return ConveyorRenderer.SPRITE_SUPPLIER.get();
+        return sprite;
     }
 
     @Override

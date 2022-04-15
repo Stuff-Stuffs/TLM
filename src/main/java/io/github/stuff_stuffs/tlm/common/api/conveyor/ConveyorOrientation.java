@@ -1,6 +1,8 @@
-package io.github.stuff_stuffs.tlm.common.block.properties;
+package io.github.stuff_stuffs.tlm.common.api.conveyor;
 
 import io.github.stuff_stuffs.tlm.common.api.UnsidedBlockApiCache;
+import io.github.stuff_stuffs.tlm.common.api.item.TLMItem;
+import io.github.stuff_stuffs.tlm.common.block.properties.TLMBlockProperties;
 import net.fabricmc.fabric.api.lookup.v1.block.BlockApiCache;
 import net.fabricmc.fabric.api.lookup.v1.block.BlockApiLookup;
 import net.minecraft.block.BlockState;
@@ -140,10 +142,12 @@ public enum ConveyorOrientation implements StringIdentifiable {
     private static @Nullable ConveyorOrientation getFromContextVertical(final ItemPlacementContext ctx) {
         final BlockPos pos = ctx.getBlockPos();
         final Vec3d center = Vec3d.ofCenter(pos);
-        final Vec3d faceCenter = center.withBias(ctx.getSide(), -0.5);
+        final Direction side = ctx.getSide();
+        final Vec3d faceCenter = center.withBias(side, -0.5);
         final Vec3d delta = faceCenter.subtract(ctx.getHitPos());
-        if (delta.lengthSquared() < 0.25 * 0.25) {
-            return fromHorizontalDirection(ctx.getSide());
+        final double rad = 0.5 - TLMItem.DIRECTIONAL_PLACING_EDGE_THICKNESS;
+        if (delta.lengthSquared() < rad * rad) {
+            return fromHorizontalDirection(side.getOpposite());
         }
         Direction best = null;
         double bestScore = Double.NEGATIVE_INFINITY;
@@ -157,8 +161,11 @@ public enum ConveyorOrientation implements StringIdentifiable {
         if (best == null) {
             return null;
         }
+        if (best == side) {
+            return fromHorizontalDirection(side);
+        }
         if (best == Direction.UP) {
-            return switch (ctx.getSide().getOpposite()) {
+            return switch (side.getOpposite()) {
                 case NORTH -> NORTH_DOWN;
                 case SOUTH -> SOUTH_DOWN;
                 case EAST -> EAST_DOWN;
@@ -167,7 +174,7 @@ public enum ConveyorOrientation implements StringIdentifiable {
             };
         }
         if (best == Direction.DOWN) {
-            return switch (ctx.getSide().getOpposite()) {
+            return switch (side.getOpposite()) {
                 case NORTH -> NORTH_UP;
                 case SOUTH -> SOUTH_UP;
                 case EAST -> EAST_UP;
@@ -175,7 +182,7 @@ public enum ConveyorOrientation implements StringIdentifiable {
                 default -> throw new RuntimeException();
             };
         }
-        return horizontal(ctx.getSide(), best);
+        return horizontal(side.getOpposite(), best.getOpposite());
     }
 
     private static @Nullable ConveyorOrientation getFromContextHorizontal(final ItemPlacementContext ctx) {
@@ -184,11 +191,13 @@ public enum ConveyorOrientation implements StringIdentifiable {
         final Vec3d faceCenter = center.withBias(ctx.getSide(), -0.5);
         final Vec3d delta = faceCenter.subtract(ctx.getHitPos());
         final Direction horizontalDirection = ctx.getPlayerFacing();
-        if (delta.lengthSquared() < 0.25 * 0.25) {
+        final double rad = 0.5 - TLMItem.DIRECTIONAL_PLACING_EDGE_THICKNESS;
+        if (delta.lengthSquared() < rad * rad) {
             return fromHorizontalDirection(horizontalDirection);
         }
         Direction best = null;
         double bestScore = Double.NEGATIVE_INFINITY;
+        final Direction opposite = horizontalDirection.getOpposite();
         for (final Direction direction : Direction.values()) {
             if (direction.getAxis() != Direction.Axis.Y) {
                 final double score = delta.dotProduct(new Vec3d(direction.getOffsetX(), direction.getOffsetY(), direction.getOffsetZ()));
@@ -201,8 +210,8 @@ public enum ConveyorOrientation implements StringIdentifiable {
         if (best == null) {
             return null;
         }
-        if (best == horizontalDirection) {
-            return fromHorizontalDirection(horizontalDirection.getOpposite());
+        if (best.getOpposite() == horizontalDirection) {
+            return fromHorizontalDirection(opposite);
         }
         return horizontal(horizontalDirection, best.getOpposite());
     }
