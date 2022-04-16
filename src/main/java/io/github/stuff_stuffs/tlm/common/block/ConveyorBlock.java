@@ -63,8 +63,8 @@ public class ConveyorBlock extends BlockEntityBlock<ConveyorBlockEntity> {
         unrotated.put(ConveyorOrientation.Type.COUNTER_CLOCKWISE_CORNER, VoxelShapes.cuboid(0, 0, 0, 1, 3 / 16.0, 1));
         VoxelShape slope = VoxelShapes.empty();
         for (int i = 0; i < 16; i++) {
-            final double start = i / 16.0;
-            final double end = (i + 3) / 16.0;
+            final double start = Math.max(Math.min(i / 16.0, 1), 0);
+            final double end = Math.max(Math.min((i + 3) / 16.0, 1), 0);
             slope = VoxelShapes.union(slope, VoxelShapes.cuboid(0, 1 - end, 1 - end, 1, 1 - start, 1 - start));
         }
         unrotated.put(ConveyorOrientation.Type.UP_SLOPE, slope);

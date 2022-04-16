@@ -1,38 +1,45 @@
-package io.github.stuff_stuffs.tlm.common.api.conveyor;
+package io.github.stuff_stuffs.tlm.common.api.conveyor.impls;
 
+import io.github.stuff_stuffs.tlm.common.api.conveyor.Conveyor;
+import io.github.stuff_stuffs.tlm.common.api.conveyor.ConveyorLike;
+import io.github.stuff_stuffs.tlm.common.api.conveyor.ConveyorTray;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.function.Supplier;
 
-public class SimpleConveyor extends AbstractConveyor {
+public class MultiSegmentConveyor extends AbstractConveyor {
     private final Direction insertSide;
     private final Direction outSide;
-    private final Vec3d start;
-    private final Vec3d deltaNorm;
+    private final List<LineSegment> segments;
     private final float length;
-    private final float slopeFactor;
     private final Cache cache;
     private Supplier<@Nullable ConveyorLike> inGetter;
     private Supplier<@Nullable ConveyorLike> outGetter;
     private Supplier<@Nullable Conveyor> outputGetter;
 
-    public SimpleConveyor(final float speed, final Direction insertSide, final Direction outSide, final Vec3d start, final Vec3d end, float slopeFactor) {
+    public MultiSegmentConveyor(final float speed, final Direction insertSide, final Direction outSide, final List<Vec3d> segmentPoints) {
         super(speed);
         this.insertSide = insertSide;
         this.outSide = outSide;
-        this.start = start;
-        this.slopeFactor = slopeFactor;
-        final Vec3d delta = end.subtract(start);
-        final double len = delta.length();
-        deltaNorm = delta.multiply(1 / len);
-        length = (float) len;
+        if (segmentPoints.size() < 2) {
+            throw new RuntimeException("Multiple points required for a segment to form!");
+        }
+        segments = new ArrayList<>(segmentPoints.size() - 1);
+        float sum = 0;
+        for (int i = 0; i < segmentPoints.size() - 1; i++) {
+            final Vec3d start = segmentPoints.get(i);
+            final Vec3d end = segmentPoints.get(i + 1);
+            final LineSegment segment = new LineSegment(start, end);
+            segments.add(segment);
+            sum += segment.length;
+        }
+        length = sum;
         cache = new Cache();
-        inGetter = () -> null;
-        outGetter = () -> null;
-        outputGetter = () -> null;
     }
 
     @Override
@@ -76,7 +83,7 @@ public class SimpleConveyor extends AbstractConveyor {
     }
 
     @Override
-    protected boolean tryAdvance(final AbstractConveyor.Entry entry, final float tickUsed) {
+    protected boolean tryAdvance(final Entry entry, final float tickUsed) {
         if (cache.output == null) {
             return false;
         }
@@ -84,29 +91,52 @@ public class SimpleConveyor extends AbstractConveyor {
     }
 
     @Override
-    protected void updatePosition(final AbstractConveyor.Entry entry, final boolean override) {
+    protected void updatePosition(final Entry entry, final boolean override) {
         final float pos = entry.getPos();
         final ConveyorTray tray = entry.getTray();
-        Vec3d newPos = start.add(deltaNorm.multiply(pos));
-        double minY = getMinY(tray, pos);
-        if (pos < ConveyorTray.TRAY_SIZE / 2.0F) {
-            if (cache.in != null) {
-                minY = Math.max(minY, cache.in.getMinY(tray, pos - ConveyorTray.TRAY_SIZE / 2.0F));
+        updatePosition(tray, pos, override);
+    }
+
+    private void updatePosition(final ConveyorTray tray, final float pos, final boolean override) {
+        float sum = 0;
+        for (final LineSegment segment : segments) {
+            if (sum + segment.length >= pos) {
+                Vec3d newPos = segment.start.add(segment.deltaNorm.multiply(pos - sum));
+                double minY = getMinY(tray, pos);
+                if (pos < ConveyorTray.TRAY_SIZE / 2.0F) {
+                    if (cache.in != null) {
+                        minY = Math.max(minY, cache.in.getMinY(tray, pos - ConveyorTray.TRAY_SIZE / 2.0F));
+                    }
+                }
+                if (pos > length - ConveyorTray.TRAY_SIZE / 2.0F) {
+                    if (cache.out != null) {
+                        minY = Math.max(minY, cache.out.getMinY(tray, pos + ConveyorTray.TRAY_SIZE / 2.0F - length));
+                    }
+                }
+                minY = Math.max(minY, getMinY(tray, Math.max(0, pos - ConveyorTray.TRAY_SIZE / 2.0F)));
+                minY = Math.max(minY, getMinY(tray, Math.min(length, pos + ConveyorTray.TRAY_SIZE / 2.0F)));
+                newPos = newPos.withAxis(Direction.Axis.Y, minY);
+                newPos = newPos.withAxis(Direction.Axis.Y, minY);
+                tray.setPosition(newPos, override);
+                break;
+            } else {
+                sum += segment.length;
             }
         }
-        if (pos > length - ConveyorTray.TRAY_SIZE / 2.0F) {
-            if (cache.out != null) {
-                minY = Math.max(minY, cache.out.getMinY(tray, pos + ConveyorTray.TRAY_SIZE / 2.0F - length));
-            }
-        }
-        minY = Math.max(minY, getMinY(tray, Math.max(0, pos - ConveyorTray.TRAY_SIZE / 2.0F)));
-        minY = Math.max(minY, getMinY(tray, Math.min(length, pos + ConveyorTray.TRAY_SIZE / 2.0F)));
-        newPos = newPos.withAxis(Direction.Axis.Y, minY);
-        entry.getTray().setPosition(newPos, override);
     }
 
     private float getMinY(final ConveyorTray tray, final float pos) {
-        return (float) start.y + (float) deltaNorm.y * pos;
+        float sum = 0;
+        float minY = Float.NEGATIVE_INFINITY;
+        for (final LineSegment segment : segments) {
+            if (sum + segment.length > pos) {
+                minY = Math.max(minY, (float) segment.start.y + (float) segment.deltaNorm.y * (pos - sum));
+                break;
+            } else {
+                sum += segment.length;
+            }
+        }
+        return minY;
     }
 
     @Override
@@ -125,12 +155,12 @@ public class SimpleConveyor extends AbstractConveyor {
         return new Conveyor() {
             @Override
             public boolean tryInsert(final ConveyorTray tray, final float tickUsed) {
-                return SimpleConveyor.this.tryInsert(tray, side, tickUsed);
+                return MultiSegmentConveyor.this.tryInsert(tray, side, tickUsed);
             }
 
             @Override
             public Iterator<ConveyorTray> getTrays() {
-                return SimpleConveyor.this.getTrays();
+                return MultiSegmentConveyor.this.getTrays();
             }
 
             @Override
@@ -157,9 +187,23 @@ public class SimpleConveyor extends AbstractConveyor {
 
             @Override
             public float getMinY(final ConveyorTray tray, final float overlap) {
-                return SimpleConveyor.this.getMinY(tray, overlap);
+                return MultiSegmentConveyor.this.getMinY(tray, overlap);
             }
         };
+    }
+
+    private static final class LineSegment {
+        private final Vec3d start;
+        private final Vec3d deltaNorm;
+        private final float length;
+
+        private LineSegment(final Vec3d start, final Vec3d end) {
+            this.start = start;
+            final Vec3d delta = end.subtract(start);
+            final double len = delta.length();
+            deltaNorm = delta.multiply(1 / len);
+            length = (float) len;
+        }
     }
 
     private static final class Cache {

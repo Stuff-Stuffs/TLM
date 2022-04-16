@@ -1,5 +1,9 @@
-package io.github.stuff_stuffs.tlm.common.api.conveyor;
+package io.github.stuff_stuffs.tlm.common.api.conveyor.impls;
 
+import io.github.stuff_stuffs.tlm.common.api.conveyor.Conveyor;
+import io.github.stuff_stuffs.tlm.common.api.conveyor.ConveyorAccess;
+import io.github.stuff_stuffs.tlm.common.api.conveyor.ConveyorLike;
+import io.github.stuff_stuffs.tlm.common.api.conveyor.ConveyorTray;
 import io.github.stuff_stuffs.tlm.common.util.MathUtil;
 import net.minecraft.util.math.Direction;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +56,7 @@ public abstract class AbstractConveyor implements ConveyorAccess {
             case NONE -> false;
             case START, START_OVERRIDE -> {
                 updateCache();
-                final float minPos = Math.max(computeMinPos(), -ConveyorTray.TRAY_SIZE/2.0F);
+                final float minPos = Math.max(computeMinPos(), -ConveyorTray.TRAY_SIZE / 2.0F);
                 if (minPos > ConveyorTray.TRAY_SIZE / 2.0F) {
                     yield false;
                 }
