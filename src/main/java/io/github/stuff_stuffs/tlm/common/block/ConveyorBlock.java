@@ -1,8 +1,8 @@
 package io.github.stuff_stuffs.tlm.common.block;
 
+import io.github.stuff_stuffs.tlm.common.api.conveyor.ConveyorOrientation;
 import io.github.stuff_stuffs.tlm.common.block.entity.ConveyorBlockEntity;
 import io.github.stuff_stuffs.tlm.common.block.entity.TLMBlockEntities;
-import io.github.stuff_stuffs.tlm.common.api.conveyor.ConveyorOrientation;
 import io.github.stuff_stuffs.tlm.common.block.properties.TLMBlockProperties;
 import io.github.stuff_stuffs.tlm.common.util.MathUtil;
 import net.minecraft.block.Block;
@@ -35,7 +35,8 @@ public class ConveyorBlock extends BlockEntityBlock<ConveyorBlockEntity> {
 
     @Override
     public VoxelShape getOutlineShape(final BlockState state, final BlockView world, final BlockPos pos, final ShapeContext context) {
-        return SHAPE_MAP.get(state.get(TLMBlockProperties.CONVEYOR_ORIENTATION_PROPERTY));
+        final ConveyorOrientation orientation = state.get(TLMBlockProperties.CONVEYOR_ORIENTATION_PROPERTY);
+        return SHAPE_MAP.get(orientation);
     }
 
     @Nullable
@@ -57,19 +58,19 @@ public class ConveyorBlock extends BlockEntityBlock<ConveyorBlockEntity> {
     static {
         SHAPE_MAP = new EnumMap<>(ConveyorOrientation.class);
         final Map<ConveyorOrientation.Type, VoxelShape> unrotated = new EnumMap<>(ConveyorOrientation.Type.class);
-        unrotated.put(ConveyorOrientation.Type.STRAIGHT, VoxelShapes.cuboid(0, 0, 0, 1, 1 / 16.0, 1));
-        unrotated.put(ConveyorOrientation.Type.CLOCKWISE_CORNER, VoxelShapes.cuboid(0, 0, 0, 1, 1 / 16.0, 1));
-        unrotated.put(ConveyorOrientation.Type.COUNTER_CLOCKWISE_CORNER, VoxelShapes.cuboid(0, 0, 0, 1, 1 / 16.0, 1));
+        unrotated.put(ConveyorOrientation.Type.STRAIGHT, VoxelShapes.cuboid(0, 0, 0, 1, 3 / 16.0, 1));
+        unrotated.put(ConveyorOrientation.Type.CLOCKWISE_CORNER, VoxelShapes.cuboid(0, 0, 0, 1, 3 / 16.0, 1));
+        unrotated.put(ConveyorOrientation.Type.COUNTER_CLOCKWISE_CORNER, VoxelShapes.cuboid(0, 0, 0, 1, 3 / 16.0, 1));
         VoxelShape slope = VoxelShapes.empty();
         for (int i = 0; i < 16; i++) {
             final double start = i / 16.0;
-            final double end = (i + 1) / 16.0;
-            slope = VoxelShapes.union(slope, VoxelShapes.cuboid(0, start, start, 1, end, end));
+            final double end = (i + 3) / 16.0;
+            slope = VoxelShapes.union(slope, VoxelShapes.cuboid(0, 1 - end, 1 - end, 1, 1 - start, 1 - start));
         }
         unrotated.put(ConveyorOrientation.Type.UP_SLOPE, slope);
         unrotated.put(ConveyorOrientation.Type.DOWN_SLOPE, MathUtil.rotate(slope, Direction.SOUTH));
         for (final ConveyorOrientation orientation : ConveyorOrientation.values()) {
-            SHAPE_MAP.put(orientation, MathUtil.rotate(unrotated.get(orientation.getType()), orientation.getInputSide().getOpposite()));
+            SHAPE_MAP.put(orientation, MathUtil.rotate(unrotated.get(orientation.getType()), orientation.getInputSide()));
         }
     }
 }

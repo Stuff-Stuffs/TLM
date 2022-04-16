@@ -5,5 +5,5 @@ public interface ConveyorLike {
 
     float getOverlapping();
 
-    void updatePosition(ConveyorTray tray, float overlap);
+    float getMinY(ConveyorTray tray, float overlap);
 }

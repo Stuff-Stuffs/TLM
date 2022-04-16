@@ -4,7 +4,11 @@ import io.github.stuff_stuffs.tlm.common.api.item.TLMItem;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.*;
+import net.minecraft.client.render.OverlayTexture;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.render.block.BlockModelRenderer;
+import net.minecraft.client.render.block.BlockRenderManager;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
@@ -33,25 +37,12 @@ public final class BlockGhostRenderer {
                 final MatrixStack matrixStack = context.matrixStack();
                 matrixStack.push();
                 matrixStack.translate(pos.getX() - cameraPos.x, pos.getY() - cameraPos.y, pos.getZ() - cameraPos.z);
-                MinecraftClient.getInstance().getBlockRenderManager().renderBlockAsEntity(state, matrixStack, new GhostVertexConsumerProvider(context.consumers()), LightmapTextureManager.pack(15, 15), OverlayTexture.DEFAULT_UV);
+                final BlockRenderManager manager = MinecraftClient.getInstance().getBlockRenderManager();
+                final BlockModelRenderer renderer = manager.getModelRenderer();
+                final VertexConsumer ghosted = new GhostVertexConsumer(context.consumers().getBuffer(RenderLayer.getTranslucent()));
+                renderer.render(context.world(), manager.getModel(state), state, pos, matrixStack, ghosted, false, context.world().getRandom(), 42, OverlayTexture.DEFAULT_UV);
                 matrixStack.pop();
             }
-        }
-    }
-
-    private static final class GhostVertexConsumerProvider implements VertexConsumerProvider {
-        private final VertexConsumerProvider wrapped;
-
-        private GhostVertexConsumerProvider(final VertexConsumerProvider wrapped) {
-            this.wrapped = wrapped;
-        }
-
-        @Override
-        public VertexConsumer getBuffer(RenderLayer layer) {
-            if (layer == RenderLayer.getSolid() || layer == RenderLayer.getCutout() || layer == TexturedRenderLayers.getEntityCutout() || layer == TexturedRenderLayers.getEntitySolid()) {
-                layer = RenderLayer.getTranslucent();
-            }
-            return new GhostVertexConsumer(wrapped.getBuffer(layer));
         }
     }
 

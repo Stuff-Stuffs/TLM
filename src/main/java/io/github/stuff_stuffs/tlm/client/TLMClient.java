@@ -4,6 +4,7 @@ import io.github.stuff_stuffs.tlm.client.render.BlockGhostRenderer;
 import io.github.stuff_stuffs.tlm.client.render.DirectionalPlacingRenderer;
 import io.github.stuff_stuffs.tlm.client.render.block.UnbakedConveyorBlockModel;
 import io.github.stuff_stuffs.tlm.client.render.block.entity.ConveyorBlockEntityRenderer;
+import io.github.stuff_stuffs.tlm.client.render.conveyor.ConveyorTrayRenderer;
 import io.github.stuff_stuffs.tlm.common.TLM;
 import io.github.stuff_stuffs.tlm.common.api.item.TLMItem;
 import io.github.stuff_stuffs.tlm.common.block.entity.TLMBlockEntities;
@@ -14,6 +15,7 @@ import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientBlockEntityEvents;
 import net.fabricmc.fabric.api.client.model.ModelLoadingRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.BlockEntityRendererRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.fabricmc.fabric.api.event.client.ClientSpriteRegistryCallback;
 import net.minecraft.client.MinecraftClient;
@@ -26,7 +28,7 @@ public class TLMClient implements ClientModInitializer {
     public void onInitializeClient() {
         ClientBlockEntityEvents.BLOCK_ENTITY_LOAD.register((blockEntity, world) -> ((ClientWorldCache) world).tlm_invalidateCache(blockEntity.getPos()));
         ClientBlockEntityEvents.BLOCK_ENTITY_UNLOAD.register((blockEntity, world) -> ((ClientWorldCache) world).tlm_invalidateCache(blockEntity.getPos()));
-        BlockEntityRendererRegistry.register(TLMBlockEntities.CONVEYOR_BLOCK_ENTITY_TYPE, ctx -> new ConveyorBlockEntityRenderer());
+        BlockEntityRendererRegistry.register(TLMBlockEntities.CONVEYOR_BLOCK_ENTITY_TYPE, ConveyorBlockEntityRenderer::new);
         ClientSpriteRegistryCallback.event(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE).register((atlasTexture, registry) -> {
             registry.register(TLM.createId("block/conveyor_belt"));
             registry.register(TLM.createId("block/conveyor_belt_ccw"));
@@ -48,5 +50,6 @@ public class TLMClient implements ClientModInitializer {
             }
             return null;
         });
+        EntityModelLayerRegistry.registerModelLayer(ConveyorTrayRenderer.CONVEYOR_TRAY_LAYER, ConveyorTrayRenderer::createTrayModel);
     }
 }

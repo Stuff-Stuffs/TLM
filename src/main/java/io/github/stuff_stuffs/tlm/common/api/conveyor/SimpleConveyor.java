@@ -11,21 +11,23 @@ public class SimpleConveyor extends AbstractConveyor {
     private final Direction insertSide;
     private final Direction outSide;
     private final Vec3d start;
-    private final Vec3d normDelta;
+    private final Vec3d deltaNorm;
     private final float length;
+    private final float slopeFactor;
     private final Cache cache;
     private Supplier<@Nullable ConveyorLike> inGetter;
     private Supplier<@Nullable ConveyorLike> outGetter;
     private Supplier<@Nullable Conveyor> outputGetter;
 
-    public SimpleConveyor(final float speed, final Direction insertSide, final Direction outSide, final Vec3d start, final Vec3d end) {
+    public SimpleConveyor(final float speed, final Direction insertSide, final Direction outSide, final Vec3d start, final Vec3d end, float slopeFactor) {
         super(speed);
         this.insertSide = insertSide;
         this.outSide = outSide;
         this.start = start;
+        this.slopeFactor = slopeFactor;
         final Vec3d delta = end.subtract(start);
         final double len = delta.length();
-        normDelta = delta.multiply(1 / len);
+        deltaNorm = delta.multiply(1 / len);
         length = (float) len;
         cache = new Cache();
         inGetter = () -> null;
@@ -84,7 +86,27 @@ public class SimpleConveyor extends AbstractConveyor {
     @Override
     protected void updatePosition(final AbstractConveyor.Entry entry, final boolean override) {
         final float pos = entry.getPos();
-        entry.getTray().setPosition(start.add(normDelta.multiply(pos)), override);
+        final ConveyorTray tray = entry.getTray();
+        Vec3d newPos = start.add(deltaNorm.multiply(pos));
+        double minY = getMinY(tray, pos);
+        if (pos < ConveyorTray.TRAY_SIZE / 2.0F) {
+            if (cache.in != null) {
+                minY = Math.max(minY, cache.in.getMinY(tray, pos - ConveyorTray.TRAY_SIZE / 2.0F));
+            }
+        }
+        if (pos > length - ConveyorTray.TRAY_SIZE / 2.0F) {
+            if (cache.out != null) {
+                minY = Math.max(minY, cache.out.getMinY(tray, pos + ConveyorTray.TRAY_SIZE / 2.0F - length));
+            }
+        }
+        minY = Math.max(minY, getMinY(tray, Math.max(0, pos - ConveyorTray.TRAY_SIZE / 2.0F)));
+        minY = Math.max(minY, getMinY(tray, Math.min(length, pos + ConveyorTray.TRAY_SIZE / 2.0F)));
+        newPos = newPos.withAxis(Direction.Axis.Y, minY);
+        entry.getTray().setPosition(newPos, override);
+    }
+
+    private float getMinY(final ConveyorTray tray, final float pos) {
+        return (float) start.y + (float) deltaNorm.y * pos;
     }
 
     @Override
@@ -134,8 +156,8 @@ public class SimpleConveyor extends AbstractConveyor {
             }
 
             @Override
-            public void updatePosition(final ConveyorTray tray, final float overlap) {
-                tray.setPosition(start.add(normDelta.multiply(overlap)), false);
+            public float getMinY(final ConveyorTray tray, final float overlap) {
+                return SimpleConveyor.this.getMinY(tray, overlap);
             }
         };
     }

@@ -46,6 +46,14 @@ public final class MathUtil {
                     tmp = maxX;
                     maxX = maxZ;
                     maxZ = tmp;
+
+                    tmp = minX;
+                    minX = 1 - maxX;
+                    maxX = 1 - tmp;
+
+                    tmp = minZ;
+                    minZ = 1 - maxZ;
+                    maxZ = 1 - tmp;
                 }
                 case WEST -> {
                     double tmp;
@@ -56,14 +64,6 @@ public final class MathUtil {
                     tmp = maxX;
                     maxX = maxZ;
                     maxZ = tmp;
-
-                    tmp = minX;
-                    minX = 1 - maxX;
-                    maxX = 1 - tmp;
-
-                    tmp = minZ;
-                    minZ = 1 - maxZ;
-                    maxZ = 1 - tmp;
                 }
             }
             rotated.setValue(VoxelShapes.union(rotated.getValue(), VoxelShapes.cuboid(minX, minY, minZ, maxX, maxY, maxZ)));

@@ -23,14 +23,29 @@ public final class DirectionalPlacingRenderer {
         if (raycast == null) {
             return false;
         } else {
-            final float centerRad = (float) (0.5 - TLMItem.DIRECTIONAL_PLACING_EDGE_THICKNESS);
+            final float edgeThickness = (float) TLMItem.DIRECTIONAL_PLACING_EDGE_THICKNESS;
+            final float centerRad = 0.5F - edgeThickness;
             matrices.push();
             matrices.translate(hitPos.getX() - outlineContext.cameraX() + 0.5, hitPos.getY() - outlineContext.cameraY() + 0.5, hitPos.getZ() - outlineContext.cameraZ() + 0.5);
             matrices.multiply(raycast.getSide().getRotationQuaternion());
             matrices.translate(-0.5, 0.5, -0.5);
-            final VertexConsumer buffer = context.consumers().getBuffer(RenderLayer.getLines());
-            renderSquare(matrices, 0, 0, 1, 1, buffer);
-            renderSquare(matrices, 0.5F - centerRad, 0.5F - centerRad, 2 * centerRad, 2 * centerRad, buffer);
+            final VertexConsumer consumer = context.consumers().getBuffer(RenderLayer.getLines());
+            renderSquare(matrices, 0, 0, 1, 1, consumer);
+            renderSquare(matrices, 0.5F - centerRad, 0.5F - centerRad, 2 * centerRad, 2 * centerRad, consumer);
+
+            final Matrix4f posMat = matrices.peek().getPositionMatrix();
+            final Matrix3f normMat = matrices.peek().getNormalMatrix();
+            consumer.vertex(posMat, 0, 0, 0).color(0, 0, 0, 1F).normal(normMat, 1, 0, 0).next();
+            consumer.vertex(posMat, edgeThickness, 0, edgeThickness).color(0, 0, 0, 1F).normal(normMat, 1, 0, 0).next();
+
+            consumer.vertex(posMat, 1, 0, 0).color(0, 0, 0, 0.4F).normal(normMat, 1, 0, 0).next();
+            consumer.vertex(posMat, 1.0F - edgeThickness, 0, edgeThickness).color(0, 0, 0, 1F).normal(normMat, 1, 0, 0).next();
+
+            consumer.vertex(posMat, 1, 0, 1).color(0, 0, 0, 1F).normal(normMat, 1, 0, 0).next();
+            consumer.vertex(posMat, 1.0F - edgeThickness, 0, 1.0F - edgeThickness).color(0, 0, 0, 1F).normal(normMat, 1, 0, 0).next();
+
+            consumer.vertex(posMat, 0, 0, 1).color(0, 0, 0, 0.4F).normal(normMat, 1, 0, 0).next();
+            consumer.vertex(posMat, edgeThickness, 0, 1.0F - edgeThickness).color(0, 0, 0, 0.4F).normal(normMat, 1, 0, 0).next();
             matrices.pop();
             return true;
         }

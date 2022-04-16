@@ -14,6 +14,7 @@ public class MultiSegmentConveyor extends AbstractConveyor {
     private final Direction outSide;
     private final List<LineSegment> segments;
     private final float length;
+    private final float maxY;
     private final Cache cache;
     private Supplier<@Nullable ConveyorLike> inGetter;
     private Supplier<@Nullable ConveyorLike> outGetter;
@@ -27,6 +28,7 @@ public class MultiSegmentConveyor extends AbstractConveyor {
             throw new RuntimeException("Multiple points required for a segment to form!");
         }
         segments = new ArrayList<>(segmentPoints.size() - 1);
+        float maxY = Float.NEGATIVE_INFINITY;
         float sum = 0;
         for (int i = 0; i < segmentPoints.size() - 1; i++) {
             final Vec3d start = segmentPoints.get(i);
@@ -34,7 +36,9 @@ public class MultiSegmentConveyor extends AbstractConveyor {
             final LineSegment segment = new LineSegment(start, end);
             segments.add(segment);
             sum += segment.length;
+            maxY = Math.max(maxY, Math.max((float) start.y, (float) end.y));
         }
+        this.maxY = maxY + 1;
         length = sum;
         cache = new Cache();
     }
@@ -98,12 +102,42 @@ public class MultiSegmentConveyor extends AbstractConveyor {
         float sum = 0;
         for (final LineSegment segment : segments) {
             if (sum + segment.length >= pos) {
-                tray.setPosition(segment.start.add(segment.deltaNorm.multiply(pos - sum)), override);
+                Vec3d newPos = segment.start.add(segment.deltaNorm.multiply(pos - sum));
+                double minY = getMinY(tray, pos);
+                if (pos < ConveyorTray.TRAY_SIZE / 2.0F) {
+                    if (cache.in != null) {
+                        minY = Math.max(minY, cache.in.getMinY(tray, pos - ConveyorTray.TRAY_SIZE / 2.0F));
+                    }
+                }
+                if (pos > length - ConveyorTray.TRAY_SIZE / 2.0F) {
+                    if (cache.out != null) {
+                        minY = Math.max(minY, cache.out.getMinY(tray, pos + ConveyorTray.TRAY_SIZE / 2.0F - length));
+                    }
+                }
+                minY = Math.max(minY, getMinY(tray, Math.max(0, pos - ConveyorTray.TRAY_SIZE / 2.0F)));
+                minY = Math.max(minY, getMinY(tray, Math.min(length, pos + ConveyorTray.TRAY_SIZE / 2.0F)));
+                newPos = newPos.withAxis(Direction.Axis.Y, minY);
+                newPos = newPos.withAxis(Direction.Axis.Y, minY);
+                tray.setPosition(newPos, override);
                 break;
             } else {
                 sum += segment.length;
             }
         }
+    }
+
+    private float getMinY(final ConveyorTray tray, final float pos) {
+        float sum = 0;
+        float minY = Float.NEGATIVE_INFINITY;
+        for (final LineSegment segment : segments) {
+            if (sum + segment.length > pos) {
+                minY = Math.max(minY, (float) segment.start.y + (float) segment.deltaNorm.y * (pos - sum));
+                break;
+            } else {
+                sum += segment.length;
+            }
+        }
+        return minY;
     }
 
     @Override
@@ -153,8 +187,8 @@ public class MultiSegmentConveyor extends AbstractConveyor {
             }
 
             @Override
-            public void updatePosition(final ConveyorTray tray, final float overlap) {
-                MultiSegmentConveyor.this.updatePosition(tray, overlap, false);
+            public float getMinY(final ConveyorTray tray, final float overlap) {
+                return MultiSegmentConveyor.this.getMinY(tray, overlap);
             }
         };
     }

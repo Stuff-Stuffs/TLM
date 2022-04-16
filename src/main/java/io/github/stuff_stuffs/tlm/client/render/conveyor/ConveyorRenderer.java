@@ -70,7 +70,7 @@ public final class ConveyorRenderer {
     private void renderStraight(final float length, final float width, final Matrix3f mat, final QuadEmitter emitter) {
         final int color = 0xFFFFFFFF;
         final float width2 = width / 2.0F;
-        emitter.square(Direction.NORTH, 0.5F - width2, 0, 0.5F + width2, length, 15.0F / 16.0F);
+        emitter.square(Direction.NORTH, 0.5F - width2, 0, 0.5F + width2, length, 13.0F / 16.0F);
         emitter.spriteUnitSquare(0);
         emitter.spriteBake(0, sprite, MutableQuadView.BAKE_NORMALIZED);
         emitter.spriteColor(0, color, color, color, color);
@@ -90,7 +90,7 @@ public final class ConveyorRenderer {
         clockwise = !clockwise;
         final int color = 0xFFFFFFFF;
         final float width2 = width / 2.0F;
-        emitter.square(Direction.NORTH, 0.5F - width2, 0, 0.5F + width2, length, 15.0F / 16.0F);
+        emitter.square(Direction.NORTH, 0.5F - width2, 0, 0.5F + width2, length, 13.0F / 16.0F);
         emitter.spriteUnitSquare(0);
         emitter.spriteBake(0, clockwise ? clockWiseSprite : counterClockWiseSprite, MutableQuadView.BAKE_NORMALIZED);
         emitter.spriteColor(0, color, color, color, color);
@@ -99,7 +99,7 @@ public final class ConveyorRenderer {
 
         emitter.square(Direction.SOUTH, 0.5F - width2, 0, 0.5F + width2, length, 0);
         emitter.spriteUnitSquare(0);
-        emitter.spriteBake(0, clockwise ? clockWiseSprite : counterClockWiseSprite, MutableQuadView.BAKE_NORMALIZED | MutableQuadView.BAKE_ROTATE_180);
+        emitter.spriteBake(0, clockwise ? clockWiseSprite : counterClockWiseSprite, MutableQuadView.BAKE_NORMALIZED | MutableQuadView.BAKE_ROTATE_270);
         emitter.spriteColor(0, color, color, color, color);
         rotate(emitter, mat);
         emitter.emit();
@@ -108,7 +108,7 @@ public final class ConveyorRenderer {
     private void renderSlope(final float length, final float width, final boolean up, final Matrix3f mat, final QuadEmitter emitter) {
         final int color = 0xFFFFFFFF;
         final float width2 = width / 2.0F;
-        emitter.square(Direction.NORTH, 0.5F - width2, 0, 0.5F + width2, length, 15.0F / 16.0F);
+        emitter.square(Direction.NORTH, 0.5F - width2, 0, 0.5F + width2, length, 13.0F / 16.0F);
         slopify(emitter, up);
         emitter.spriteUnitSquare(0);
         emitter.spriteBake(0, sprite, MutableQuadView.BAKE_NORMALIZED);
@@ -122,6 +122,7 @@ public final class ConveyorRenderer {
         emitter.spriteBake(0, sprite, MutableQuadView.BAKE_NORMALIZED | MutableQuadView.BAKE_ROTATE_180);
         emitter.spriteColor(0, color, color, color, color);
         rotate(emitter, mat);
+        emitter.cullFace(null);
         emitter.emit();
     }
 
@@ -157,7 +158,7 @@ public final class ConveyorRenderer {
         }
     }
 
-    public ConveyorRenderer(final float length, final float width, final Sprite sprite, Sprite clockWiseSprite, final Sprite counterClockWiseSprite) {
+    public ConveyorRenderer(final float length, final float width, final Sprite sprite, final Sprite clockWiseSprite, final Sprite counterClockWiseSprite) {
         this.length = length;
         this.width = width;
         this.sprite = sprite;

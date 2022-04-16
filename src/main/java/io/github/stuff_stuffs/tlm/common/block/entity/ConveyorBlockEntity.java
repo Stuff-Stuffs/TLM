@@ -1,7 +1,6 @@
 package io.github.stuff_stuffs.tlm.common.block.entity;
 
 import io.github.stuff_stuffs.tlm.common.api.conveyor.*;
-import io.github.stuff_stuffs.tlm.common.api.conveyor.ConveyorOrientation;
 import io.github.stuff_stuffs.tlm.common.block.properties.TLMBlockProperties;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
@@ -26,13 +25,21 @@ public class ConveyorBlockEntity extends BlockEntity implements ConveyorSupplier
     private static AbstractConveyor createConveyor(final BlockPos pos, final ConveyorOrientation orientation) {
         final Vec3d center = Vec3d.ofCenter(orientation.getInputPos(pos));
         final Vec3d outCenter = Vec3d.ofCenter(orientation.getOutputPos(pos));
-        final Vec3d in = center.withBias(orientation.getInputSide(), -0.5);
-        final Vec3d out = outCenter.withBias(orientation.getOutputDirection(), -0.5);
-        if (orientation.getType() == ConveyorOrientation.Type.UP_SLOPE) {
-            final Vec3d outMid = outCenter.withBias(orientation.getOutputDirection(), -(0.5 + ConveyorTray.TRAY_SIZE / 2.0F));
-            return new MultiSegmentConveyor(0.125F, orientation.getInputSide(), orientation.getOutputDirection(), List.of(in, outMid, out));
+        final Vec3d in = center.withBias(orientation.getInputSide(), -0.5).add(0, -4 / 12.0, 0);
+        final Vec3d out = outCenter.withBias(orientation.getOutputDirection(), -0.5).add(0, -4 / 12.0, 0);
+        //if (orientation.getType() == ConveyorOrientation.Type.UP_SLOPE) {
+        //    final Vec3d outMid = outCenter.withBias(orientation.getOutputDirection(), -0.5).add(0, -4 / 12.0, 0);
+        //    return new MultiSegmentConveyor(0.125F, orientation.getInputSide(), orientation.getOutputDirection(), List.of(in, outMid, out));
+        //}
+        //if (orientation.getType() == ConveyorOrientation.Type.DOWN_SLOPE) {
+        //    final Vec3d outMid = in.withBias(orientation.getInputSide(), -0.5).add(0, -4 / 12.0, 0);
+        //    return new MultiSegmentConveyor(0.125F, orientation.getInputSide(), orientation.getOutputDirection(), List.of(in, outMid, out));
+        //}
+        if(orientation.getType()== ConveyorOrientation.Type.CLOCKWISE_CORNER||orientation.getType()== ConveyorOrientation.Type.COUNTER_CLOCKWISE_CORNER) {
+            Vec3d cornerCenter = Vec3d.ofCenter(orientation.getInputPos(pos).offset(orientation.getInputSide().getOpposite())).add(0, -4 / 12.0, 0);
+            return new MultiSegmentConveyor(0.125F, orientation.getInputSide(), orientation.getOutputDirection(), List.of(in, cornerCenter, out));
         }
-        return new SimpleConveyor(0.125F, orientation.getInputSide(), orientation.getOutputDirection(), in, out);
+        return new SimpleConveyor(0.125F, orientation.getInputSide(), orientation.getOutputDirection(), in, out, 1);
     }
 
     @Override
