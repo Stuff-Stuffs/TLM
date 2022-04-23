@@ -1,6 +1,6 @@
 package io.github.stuff_stuffs.tlm.common;
 
-import io.github.stuff_stuffs.tlm.common.api.conveyor.resource.ConveyedResourceType;
+import io.github.stuff_stuffs.tlm.common.api.resource.ConveyedResourceType;
 import io.github.stuff_stuffs.tlm.common.block.TLMBlocks;
 import io.github.stuff_stuffs.tlm.common.item.TLMItems;
 import net.fabricmc.api.ModInitializer;

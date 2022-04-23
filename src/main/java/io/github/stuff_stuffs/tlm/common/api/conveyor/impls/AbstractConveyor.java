@@ -3,8 +3,9 @@ package io.github.stuff_stuffs.tlm.common.api.conveyor.impls;
 import io.github.stuff_stuffs.tlm.common.api.conveyor.Conveyor;
 import io.github.stuff_stuffs.tlm.common.api.conveyor.ConveyorAccess;
 import io.github.stuff_stuffs.tlm.common.api.conveyor.ConveyorLike;
-import io.github.stuff_stuffs.tlm.common.api.conveyor.ConveyorTray;
+import io.github.stuff_stuffs.tlm.common.api.resource.ConveyorTray;
 import io.github.stuff_stuffs.tlm.common.util.MathUtil;
+import net.minecraft.network.PacketByteBuf;
 import net.minecraft.util.math.Direction;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +18,7 @@ public abstract class AbstractConveyor implements ConveyorAccess {
     private final EnumMap<Direction, Conveyor> conveyorCache;
     protected final List<Entry> entries = new ArrayList<>();
     protected final float speed;
+    protected boolean syncNeeded = true;
 
     protected AbstractConveyor(final float speed) {
         nullSidedConveyor = computeConveyor(null);
@@ -24,10 +26,33 @@ public abstract class AbstractConveyor implements ConveyorAccess {
         this.speed = speed;
     }
 
+    public void clearSyncFlag() {
+        syncNeeded = false;
+        for (final Entry entry : entries) {
+            entry.getTray().clearSyncFlag();
+        }
+    }
+
+    public boolean isSyncNeeded() {
+        if (syncNeeded) {
+            return true;
+        }
+        for (final Entry entry : entries) {
+            if (entry.getTray().isSyncNeeded()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public Iterator<ConveyorTray> getTrays() {
         return entries.stream().map(Entry::getTray).iterator();
     }
+
+    public abstract void writeSyncToBuf(PacketByteBuf buf);
+
+    public abstract void readSyncFromBuf(PacketByteBuf buf);
 
     protected abstract void updateCache();
 
@@ -41,14 +66,14 @@ public abstract class AbstractConveyor implements ConveyorAccess {
 
     protected abstract InsertMode getInsertMode(ConveyorTray tray, @Nullable Direction direction);
 
-    public Conveyor getConveyor(@Nullable final Direction side) {
+    public @Nullable Conveyor getConveyor(@Nullable final Direction side) {
         if (side == null) {
             return nullSidedConveyor;
         }
         return conveyorCache.computeIfAbsent(side, this::computeConveyor);
     }
 
-    protected abstract Conveyor computeConveyor(@Nullable final Direction side);
+    protected abstract @Nullable Conveyor computeConveyor(@Nullable final Direction side);
 
     protected boolean tryInsert(final ConveyorTray tray, @Nullable final Direction direction, final float usedTick) {
         final InsertMode mode = getInsertMode(tray, direction);
@@ -64,6 +89,7 @@ public abstract class AbstractConveyor implements ConveyorAccess {
                 if (!MathUtil.greaterThan(maxPos, minPos)) {
                     yield false;
                 }
+                syncNeeded = true;
                 final Entry entry = new Entry(tray, minPos, 1 - usedTick);
                 final int index = getInsertIndex(entries, entry, COMPARATOR);
                 entries.add(index, entry);
@@ -81,6 +107,7 @@ public abstract class AbstractConveyor implements ConveyorAccess {
                 final int index = getInsertIndex(entries, entry, COMPARATOR);
                 entries.add(index, entry);
                 updatePosition(entry, true);
+                syncNeeded = true;
                 yield true;
             }
         };
@@ -132,6 +159,7 @@ public abstract class AbstractConveyor implements ConveyorAccess {
                 final float tickUsed = (nextPos - maxPos) / movement;
                 entries.remove(i);
                 if (tryAdvance(entry, tickUsed)) {
+                    syncNeeded = true;
                     skip = true;
                 } else {
                     entries.add(i, entry);
@@ -150,11 +178,11 @@ public abstract class AbstractConveyor implements ConveyorAccess {
     }
 
     protected static final class Entry {
-        private final ConveyorTray tray;
-        private float pos;
-        private float tickRemaining;
+        final ConveyorTray tray;
+        float pos;
+        float tickRemaining;
 
-        private Entry(final ConveyorTray tray, final float pos, final float tickRemaining) {
+        public Entry(final ConveyorTray tray, final float pos, final float tickRemaining) {
             this.tray = tray;
             this.pos = pos;
             this.tickRemaining = tickRemaining;

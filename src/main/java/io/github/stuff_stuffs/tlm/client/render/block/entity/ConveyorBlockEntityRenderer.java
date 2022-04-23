@@ -1,7 +1,7 @@
 package io.github.stuff_stuffs.tlm.client.render.block.entity;
 
 import io.github.stuff_stuffs.tlm.client.render.conveyor.ConveyorTrayRenderer;
-import io.github.stuff_stuffs.tlm.common.api.conveyor.ConveyorTray;
+import io.github.stuff_stuffs.tlm.common.api.resource.ConveyorTray;
 import io.github.stuff_stuffs.tlm.common.block.entity.ConveyorBlockEntity;
 import net.minecraft.client.model.ModelPart;
 import net.minecraft.client.render.VertexConsumerProvider;
@@ -19,7 +19,6 @@ public class ConveyorBlockEntityRenderer implements BlockEntityRenderer<Conveyor
     public ConveyorBlockEntityRenderer(final BlockEntityRendererFactory.Context context) {
         trayModel = context.getLayerModelPart(ConveyorTrayRenderer.CONVEYOR_TRAY_LAYER);
     }
-
 
     @Override
     public void render(final ConveyorBlockEntity entity, final float tickDelta, final MatrixStack matrices, final VertexConsumerProvider vertexConsumers, final int light, final int overlay) {

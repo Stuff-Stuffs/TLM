@@ -1,8 +1,8 @@
-package io.github.stuff_stuffs.tlm.client.render.block;
+package io.github.stuff_stuffs.tlm.client.render.block.model;
 
 import io.github.stuff_stuffs.tlm.client.render.conveyor.ConveyorRenderer;
 import io.github.stuff_stuffs.tlm.common.api.conveyor.ConveyorOrientation;
-import io.github.stuff_stuffs.tlm.common.block.properties.TLMBlockProperties;
+import io.github.stuff_stuffs.tlm.common.block.TLMBlockProperties;
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
 import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;

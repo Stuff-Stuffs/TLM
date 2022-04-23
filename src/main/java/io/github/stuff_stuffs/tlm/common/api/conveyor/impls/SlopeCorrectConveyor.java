@@ -2,7 +2,7 @@ package io.github.stuff_stuffs.tlm.common.api.conveyor.impls;
 
 import io.github.stuff_stuffs.tlm.common.api.conveyor.Conveyor;
 import io.github.stuff_stuffs.tlm.common.api.conveyor.ConveyorLike;
-import io.github.stuff_stuffs.tlm.common.api.conveyor.ConveyorTray;
+import io.github.stuff_stuffs.tlm.common.api.resource.ConveyorTray;
 import io.github.stuff_stuffs.tlm.common.util.MathUtil;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Iterator;
 import java.util.function.Supplier;
 
-public class SlopeCorrectConveyor extends AbstractConveyor {
+public class SlopeCorrectConveyor extends AbstractSyncingConveyor {
     private final Direction insertSide;
     private final Direction outSide;
     private final Vec3d start;
@@ -24,7 +24,7 @@ public class SlopeCorrectConveyor extends AbstractConveyor {
     private Supplier<@Nullable Conveyor> outputGetter;
 
     private SlopeCorrectConveyor(final float speed, final Direction insertSide, final Direction outSide, final Vec3d start, final Vec3d flat, final float slope, final float length, final float stretch) {
-        super(speed / stretch);
+        super(speed * stretch);
         this.insertSide = insertSide;
         this.outSide = outSide;
         this.start = start;
@@ -127,47 +127,91 @@ public class SlopeCorrectConveyor extends AbstractConveyor {
 
     @Override
     protected Conveyor computeConveyor(@Nullable final Direction side) {
-        return new Conveyor() {
-            @Override
-            public boolean tryInsert(final ConveyorTray tray, final float tickUsed) {
-                return SlopeCorrectConveyor.this.tryInsert(tray, side, tickUsed);
-            }
-
-            @Override
-            public Iterator<ConveyorTray> getTrays() {
-                return SlopeCorrectConveyor.this.getTrays();
-            }
-
-            @Override
-            public float getMaximumOverlap() {
-                if (side == outSide) {
-                    return entries.isEmpty() ? ConveyorTray.TRAY_SIZE / 2.0F : Math.min(Math.max(length - entries.get(0).getPos(), 0), ConveyorTray.TRAY_SIZE / 2.0F);
+        if (side == null) {
+            return new Conveyor() {
+                @Override
+                public boolean tryInsert(final ConveyorTray tray, final float tickUsed) {
+                    return SlopeCorrectConveyor.this.tryInsert(tray, null, tickUsed);
                 }
-                if (side != insertSide) {
+
+                @Override
+                public Iterator<ConveyorTray> getTrays() {
+                    return SlopeCorrectConveyor.this.getTrays();
+                }
+
+                @Override
+                public float getMaximumOverlap() {
                     return 0;
                 }
-                return entries.isEmpty() ? ConveyorTray.TRAY_SIZE / 2.0F : Math.min(Math.max(entries.get(entries.size() - 1).getPos() - ConveyorTray.TRAY_SIZE / 2.0F, 0), ConveyorTray.TRAY_SIZE / 2.0F);
-            }
 
-            @Override
-            public float getOverlapping() {
-                if (side == insertSide) {
+                @Override
+                public float getOverlapping() {
+                    return 0;
+                }
+
+                @Override
+                public float getMinY(final ConveyorTray tray, final float overlap) {
+                    return SlopeCorrectConveyor.this.getMinY(tray, length / 2.0F);
+                }
+            };
+        }
+        if (side == insertSide) {
+            return new Conveyor() {
+                @Override
+                public boolean tryInsert(final ConveyorTray tray, final float tickUsed) {
+                    return SlopeCorrectConveyor.this.tryInsert(tray, insertSide, tickUsed);
+                }
+
+                @Override
+                public Iterator<ConveyorTray> getTrays() {
+                    return SlopeCorrectConveyor.this.getTrays();
+                }
+
+                @Override
+                public float getMaximumOverlap() {
+                    return entries.isEmpty() ? ConveyorTray.TRAY_SIZE / 2.0F : Math.min(Math.max(entries.get(entries.size() - 1).getPos() - ConveyorTray.TRAY_SIZE / 2.0F, 0), ConveyorTray.TRAY_SIZE / 2.0F);
+                }
+
+                @Override
+                public float getOverlapping() {
                     return entries.isEmpty() ? 0 : Math.max(-(entries.get(entries.size() - 1).getPos() - ConveyorTray.TRAY_SIZE / 2.0F), 0);
                 }
-                if (side != outSide) {
-                    return 0;
-                }
-                return entries.isEmpty() ? 0 : Math.max(entries.get(0).getPos() - length + ConveyorTray.TRAY_SIZE / 2.0F, 0);
-            }
 
-            @Override
-            public float getMinY(final ConveyorTray tray, final float overlap) {
-                if (side == outSide) {
+                @Override
+                public float getMinY(final ConveyorTray tray, final float overlap) {
+                    return SlopeCorrectConveyor.this.getMinY(tray, overlap);
+                }
+            };
+        }
+        if (side == outSide) {
+            return new Conveyor() {
+                @Override
+                public boolean tryInsert(final ConveyorTray tray, final float tickUsed) {
+                    return SlopeCorrectConveyor.this.tryInsert(tray, outSide, tickUsed);
+                }
+
+                @Override
+                public Iterator<ConveyorTray> getTrays() {
+                    return SlopeCorrectConveyor.this.getTrays();
+                }
+
+                @Override
+                public float getMaximumOverlap() {
+                    return entries.isEmpty() ? ConveyorTray.TRAY_SIZE / 2.0F : Math.min(Math.max(length - entries.get(0).getPos(), 0), ConveyorTray.TRAY_SIZE / 2.0F);
+                }
+
+                @Override
+                public float getOverlapping() {
+                    return entries.isEmpty() ? 0 : Math.max(entries.get(0).getPos() - length + ConveyorTray.TRAY_SIZE / 2.0F, 0);
+                }
+
+                @Override
+                public float getMinY(final ConveyorTray tray, final float overlap) {
                     return Math.max(SlopeCorrectConveyor.this.getMinY(tray, length - overlap), SlopeCorrectConveyor.this.getMinY(tray, length));
                 }
-                return SlopeCorrectConveyor.this.getMinY(tray, overlap);
-            }
-        };
+            };
+        }
+        return null;
     }
 
     public static AbstractConveyor create(final float speed, final Direction insertSide, final Direction outSide, final Vec3d start, final Vec3d end) {
@@ -177,7 +221,7 @@ public class SlopeCorrectConveyor extends AbstractConveyor {
         final Vec3d delta = end.subtract(start);
         final double len = delta.length();
         final Vec3d deltaNorm = delta.multiply(1 / len);
-        if (MathUtil.equalTo((float) deltaNorm.y, 1.0F)) {
+        if (MathUtil.equalTo(Math.abs((float) deltaNorm.y - 1.0F), 0.0F)) {
             return new SimpleConveyor(speed, insertSide, outSide, start, end);
         }
         final Vec3d flat = delta.withAxis(Direction.Axis.Y, 0);

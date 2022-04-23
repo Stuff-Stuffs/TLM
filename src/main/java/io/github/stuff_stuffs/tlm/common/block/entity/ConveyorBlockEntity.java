@@ -1,40 +1,67 @@
 package io.github.stuff_stuffs.tlm.common.block.entity;
 
+import io.github.stuff_stuffs.tlm.common.api.UpdatingBlockEntity;
 import io.github.stuff_stuffs.tlm.common.api.conveyor.*;
 import io.github.stuff_stuffs.tlm.common.api.conveyor.impls.AbstractConveyor;
 import io.github.stuff_stuffs.tlm.common.api.conveyor.impls.MultiSegmentConveyor;
 import io.github.stuff_stuffs.tlm.common.api.conveyor.impls.SlopeCorrectConveyor;
-import io.github.stuff_stuffs.tlm.common.block.properties.TLMBlockProperties;
+import io.github.stuff_stuffs.tlm.common.block.TLMBlockProperties;
+import io.github.stuff_stuffs.tlm.common.network.UpdatingBlockEntitySender;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.entity.BlockEntityType;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Supplier;
 
-public class ConveyorBlockEntity extends BlockEntity implements ConveyorSupplier {
-    private AbstractConveyor conveyor;
-    private boolean initialized = false;
+public class ConveyorBlockEntity extends BlockEntity implements ConveyorSupplier, UpdatingBlockEntity {
+    public static final float BASE_CONVEYOR_SPEED = 0.125F;
+    protected static final byte CONVEYOR_SYNC = 0;
+    protected AbstractConveyor conveyor;
+    protected boolean initialized = false;
+
+    protected ConveyorBlockEntity(final BlockEntityType<?> type, final BlockPos pos, final BlockState state) {
+        super(type, pos, state);
+        conveyor = createConveyor(pos, state);
+    }
 
     public ConveyorBlockEntity(final BlockPos pos, final BlockState state) {
         super(TLMBlockEntities.CONVEYOR_BLOCK_ENTITY_TYPE, pos, state);
-        conveyor = createConveyor(pos, state.get(TLMBlockProperties.CONVEYOR_ORIENTATION_PROPERTY));
+        conveyor = createConveyor(pos, state);
     }
 
-    private static AbstractConveyor createConveyor(final BlockPos pos, final ConveyorOrientation orientation) {
+    @Override
+    public void handleUpdate(final PacketByteBuf buf) {
+        final byte type = buf.readByte();
+        if (type == CONVEYOR_SYNC) {
+            conveyor.readSyncFromBuf(buf);
+        }
+    }
+
+    protected AbstractConveyor createConveyor(final BlockPos pos, BlockState state) {
+        return createConveyor(pos, state.get(TLMBlockProperties.CONVEYOR_ORIENTATION_PROPERTY), BASE_CONVEYOR_SPEED);
+    }
+
+    public static AbstractConveyor createConveyor(final BlockPos pos, final ConveyorOrientation orientation, final float speed) {
         final Vec3d center = Vec3d.ofCenter(orientation.getInputPos(pos));
         final Vec3d outCenter = Vec3d.ofCenter(orientation.getOutputPos(pos));
         final Vec3d in = center.withBias(orientation.getInputSide(), -0.5).add(0, -4 / 12.0, 0);
         final Vec3d out = outCenter.withBias(orientation.getOutputDirection(), -0.5).add(0, -4 / 12.0, 0);
         if (orientation.getType() == ConveyorOrientation.Type.CLOCKWISE_CORNER || orientation.getType() == ConveyorOrientation.Type.COUNTER_CLOCKWISE_CORNER) {
             final Vec3d cornerCenter = Vec3d.ofCenter(orientation.getInputPos(pos).offset(orientation.getInputSide().getOpposite())).add(0, -4 / 12.0, 0);
-            return new MultiSegmentConveyor(0.125F, orientation.getInputSide(), orientation.getOutputDirection(), List.of(in, cornerCenter, out));
+            return new MultiSegmentConveyor(speed, orientation.getInputSide(), orientation.getOutputDirection(), List.of(in, cornerCenter, out));
         }
-        return SlopeCorrectConveyor.create(0.125F, orientation.getInputSide(), orientation.getOutputDirection(), in, out);
+        return SlopeCorrectConveyor.create(speed, orientation.getInputSide(), orientation.getOutputDirection(), in, out);
     }
 
     @Override
@@ -52,7 +79,7 @@ public class ConveyorBlockEntity extends BlockEntity implements ConveyorSupplier
         final boolean diff = state != getCachedState();
         super.setCachedState(state);
         if (diff) {
-            conveyor = createConveyor(pos, state.get(TLMBlockProperties.CONVEYOR_ORIENTATION_PROPERTY));
+            conveyor = createConveyor(pos, state);
             initialized = false;
         }
     }
@@ -69,9 +96,16 @@ public class ConveyorBlockEntity extends BlockEntity implements ConveyorSupplier
             conveyor.initialized = true;
         }
         conveyor.conveyor.tick();
-        if (conveyor.pos.equals(BlockPos.ORIGIN)) {
-            final ConveyorTray tray = new ConveyorTray();
-            conveyor.conveyor.getConveyor(null).tryInsert(tray, 1);
+        if (!world.isClient() && conveyor.conveyor.isSyncNeeded()) {
+            final Collection<ServerPlayerEntity> tracking = PlayerLookup.tracking(conveyor);
+            if (tracking.isEmpty()) {
+                return;
+            }
+            final PacketByteBuf buf = PacketByteBufs.create();
+            buf.writeByte(CONVEYOR_SYNC);
+            conveyor.conveyor.writeSyncToBuf(buf);
+            UpdatingBlockEntitySender.send(conveyor, buf, tracking);
+            conveyor.conveyor.clearSyncFlag();
         }
     }
 }

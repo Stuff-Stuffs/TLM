@@ -2,7 +2,7 @@ package io.github.stuff_stuffs.tlm.common.api.conveyor.impls;
 
 import io.github.stuff_stuffs.tlm.common.api.conveyor.Conveyor;
 import io.github.stuff_stuffs.tlm.common.api.conveyor.ConveyorLike;
-import io.github.stuff_stuffs.tlm.common.api.conveyor.ConveyorTray;
+import io.github.stuff_stuffs.tlm.common.api.resource.ConveyorTray;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.Nullable;
@@ -12,7 +12,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.function.Supplier;
 
-public class MultiSegmentConveyor extends AbstractConveyor {
+public class MultiSegmentConveyor extends AbstractSyncingConveyor {
     private final Direction insertSide;
     private final Direction outSide;
     private final List<LineSegment> segments;
@@ -105,7 +105,7 @@ public class MultiSegmentConveyor extends AbstractConveyor {
                 double minY = getMinY(tray, pos);
                 if (pos < ConveyorTray.TRAY_SIZE / 2.0F) {
                     if (cache.in != null) {
-                        minY = Math.max(minY, cache.in.getMinY(tray, pos - ConveyorTray.TRAY_SIZE / 2.0F));
+                        minY = Math.max(minY, cache.in.getMinY(tray, Math.abs(pos - ConveyorTray.TRAY_SIZE / 2.0F)));
                     }
                 }
                 if (pos > length - ConveyorTray.TRAY_SIZE / 2.0F) {
@@ -152,44 +152,91 @@ public class MultiSegmentConveyor extends AbstractConveyor {
 
     @Override
     protected Conveyor computeConveyor(@Nullable final Direction side) {
-        return new Conveyor() {
-            @Override
-            public boolean tryInsert(final ConveyorTray tray, final float tickUsed) {
-                return MultiSegmentConveyor.this.tryInsert(tray, side, tickUsed);
-            }
-
-            @Override
-            public Iterator<ConveyorTray> getTrays() {
-                return MultiSegmentConveyor.this.getTrays();
-            }
-
-            @Override
-            public float getMaximumOverlap() {
-                if (side == outSide) {
-                    return entries.isEmpty() ? ConveyorTray.TRAY_SIZE / 2.0F : Math.min(Math.max(length - entries.get(0).getPos(), 0), ConveyorTray.TRAY_SIZE / 2.0F);
+        if (side == null) {
+            return new Conveyor() {
+                @Override
+                public boolean tryInsert(final ConveyorTray tray, final float tickUsed) {
+                    return MultiSegmentConveyor.this.tryInsert(tray, null, tickUsed);
                 }
-                if (side != insertSide) {
+
+                @Override
+                public Iterator<ConveyorTray> getTrays() {
+                    return MultiSegmentConveyor.this.getTrays();
+                }
+
+                @Override
+                public float getMaximumOverlap() {
                     return 0;
                 }
-                return entries.isEmpty() ? ConveyorTray.TRAY_SIZE / 2.0F : Math.min(Math.max(entries.get(entries.size() - 1).getPos() - ConveyorTray.TRAY_SIZE / 2.0F, 0), ConveyorTray.TRAY_SIZE / 2.0F);
-            }
 
-            @Override
-            public float getOverlapping() {
-                if (side == insertSide) {
+                @Override
+                public float getOverlapping() {
+                    return 0;
+                }
+
+                @Override
+                public float getMinY(final ConveyorTray tray, final float overlap) {
+                    return MultiSegmentConveyor.this.getMinY(tray, length / 2.0F);
+                }
+            };
+        }
+        if (side == insertSide) {
+            return new Conveyor() {
+                @Override
+                public boolean tryInsert(final ConveyorTray tray, final float tickUsed) {
+                    return MultiSegmentConveyor.this.tryInsert(tray, insertSide, tickUsed);
+                }
+
+                @Override
+                public Iterator<ConveyorTray> getTrays() {
+                    return MultiSegmentConveyor.this.getTrays();
+                }
+
+                @Override
+                public float getMaximumOverlap() {
+                    return entries.isEmpty() ? ConveyorTray.TRAY_SIZE / 2.0F : Math.min(Math.max(entries.get(entries.size() - 1).getPos() - ConveyorTray.TRAY_SIZE / 2.0F, 0), ConveyorTray.TRAY_SIZE / 2.0F);
+                }
+
+                @Override
+                public float getOverlapping() {
                     return entries.isEmpty() ? 0 : Math.max(-(entries.get(entries.size() - 1).getPos() - ConveyorTray.TRAY_SIZE / 2.0F), 0);
                 }
-                if (side != outSide) {
-                    return 0;
-                }
-                return entries.isEmpty() ? 0 : Math.max(entries.get(0).getPos() - length + ConveyorTray.TRAY_SIZE / 2.0F, 0);
-            }
 
-            @Override
-            public float getMinY(final ConveyorTray tray, final float overlap) {
-                return MultiSegmentConveyor.this.getMinY(tray, overlap);
-            }
-        };
+                @Override
+                public float getMinY(final ConveyorTray tray, final float overlap) {
+                    return MultiSegmentConveyor.this.getMinY(tray, overlap);
+                }
+            };
+        }
+        if (side == outSide) {
+            return new Conveyor() {
+                @Override
+                public boolean tryInsert(final ConveyorTray tray, final float tickUsed) {
+                    return MultiSegmentConveyor.this.tryInsert(tray, outSide, tickUsed);
+                }
+
+                @Override
+                public Iterator<ConveyorTray> getTrays() {
+                    return MultiSegmentConveyor.this.getTrays();
+                }
+
+                @Override
+                public float getMaximumOverlap() {
+                    return entries.isEmpty() ? ConveyorTray.TRAY_SIZE / 2.0F : Math.min(Math.max(length - entries.get(0).getPos(), 0), ConveyorTray.TRAY_SIZE / 2.0F);
+                }
+
+                @Override
+                public float getOverlapping() {
+                    return entries.isEmpty() ? 0 : Math.max(entries.get(0).getPos() - length + ConveyorTray.TRAY_SIZE / 2.0F, 0);
+                }
+
+                @Override
+                public float getMinY(final ConveyorTray tray, final float overlap) {
+                    return Math.max(MultiSegmentConveyor.this.getMinY(tray, length - overlap), MultiSegmentConveyor.this.getMinY(tray, length));
+                }
+            };
+        }
+        return null;
     }
 
     private static final class LineSegment {

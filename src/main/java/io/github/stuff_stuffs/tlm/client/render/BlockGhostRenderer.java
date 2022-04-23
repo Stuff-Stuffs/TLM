@@ -16,6 +16,7 @@ import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.*;
 import net.minecraft.world.RaycastContext;
 
@@ -27,9 +28,9 @@ public final class BlockGhostRenderer {
             final Vec3d cameraPos = context.camera().getPos();
             final Vec3f look = new Vec3f(0, 0, 1);
             look.transform(new Matrix3f(context.camera().getRotation()));
-            final Vec3d end = cameraPos.add(new Vec3d(look).multiply(100));
+            final Vec3d end = cameraPos.add(new Vec3d(look).multiply(5));
             final BlockHitResult raycast = context.world().raycast(new RaycastContext(cameraPos, end, RaycastContext.ShapeType.OUTLINE, RaycastContext.FluidHandling.NONE, MinecraftClient.getInstance().cameraEntity));
-            if (raycast != null) {
+            if (raycast != null && raycast.getType() != HitResult.Type.MISS) {
                 final ItemPlacementContext itemContext = new ItemPlacementContext(MinecraftClient.getInstance().player, Hand.MAIN_HAND, stack, raycast);
                 final ItemPlacementContext placementContext = blockItem.getPlacementContext(itemContext);
                 final BlockState state = blockItem.getBlock().getPlacementState(placementContext);

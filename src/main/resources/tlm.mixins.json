@@ -4,6 +4,7 @@
   "package": "io.github.stuff_stuffs.tlm.mixin.impl",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
+    "MixinWorldChunk"
   ],
   "client": [
     "MixinClientWorld"

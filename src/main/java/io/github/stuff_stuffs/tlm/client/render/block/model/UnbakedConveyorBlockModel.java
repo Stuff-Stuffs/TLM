@@ -1,4 +1,4 @@
-package io.github.stuff_stuffs.tlm.client.render.block;
+package io.github.stuff_stuffs.tlm.client.render.block.model;
 
 import com.mojang.datafixers.util.Pair;
 import io.github.stuff_stuffs.tlm.common.TLM;
@@ -19,9 +19,9 @@ import java.util.Set;
 import java.util.function.Function;
 
 public class UnbakedConveyorBlockModel implements UnbakedModel {
-    private static final SpriteIdentifier SPRITE = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, TLM.createId("block/conveyor_belt"));
-    private static final SpriteIdentifier CLOCKWISE_SPRITE = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, TLM.createId("block/conveyor_belt_cw"));
-    private static final SpriteIdentifier COUNTER_CLOCKWISE_SPRITE = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, TLM.createId("block/conveyor_belt_ccw"));
+    public static final SpriteIdentifier SPRITE = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, TLM.createId("block/conveyor_belt"));
+    public static final SpriteIdentifier CLOCKWISE_SPRITE = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, TLM.createId("block/conveyor_belt_cw"));
+    public static final SpriteIdentifier COUNTER_CLOCKWISE_SPRITE = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, TLM.createId("block/conveyor_belt_ccw"));
 
     @Override
     public Collection<Identifier> getModelDependencies() {

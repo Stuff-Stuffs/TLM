@@ -8,9 +8,17 @@ import net.minecraft.util.registry.Registry;
 
 public final class TLMItems {
     public static final BlockItem CONVEYOR_BLOCK_ITEM = new TLMBlockItem(TLMBlocks.CONVEYOR_BLOCK, new FabricItemSettings(), true, true);
+    public static final BlockItem STORAGE_ARRAY_CRATE_ITEM = new TLMBlockItem(TLMBlocks.STORAGE_CRATE_BLOCK, new FabricItemSettings(), false, false);
+    public static final BlockItem STORAGE_CRATE_UNLOADER = new TLMBlockItem(TLMBlocks.STORAGE_CRATE_UNLOADER_BLOCK, new FabricItemSettings(), false, false);
+    public static final BlockItem STORAGE_CRATE_LOADER = new TLMBlockItem(TLMBlocks.STORAGE_CRATE_LOADER_BLOCK, new FabricItemSettings(), false, false);
+    public static final BlockItem LABELER_ITEM = new TLMBlockItem(TLMBlocks.LABELER_BLOCK, new FabricItemSettings(), false, true);
 
     public static void init() {
         Registry.register(Registry.ITEM, TLM.createId("conveyor"), CONVEYOR_BLOCK_ITEM);
+        Registry.register(Registry.ITEM, TLM.createId("storage_crate"), STORAGE_ARRAY_CRATE_ITEM);
+        Registry.register(Registry.ITEM, TLM.createId("storage_crate_unloader"), STORAGE_CRATE_UNLOADER);
+        Registry.register(Registry.ITEM, TLM.createId("storage_crate_loader"), STORAGE_CRATE_LOADER);
+        Registry.register(Registry.ITEM, TLM.createId("labeler"), LABELER_ITEM);
     }
 
     private TLMItems() {

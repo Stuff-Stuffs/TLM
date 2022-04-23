@@ -6,11 +6,10 @@ import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.*;
 
 public final class DirectionalPlacingRenderer {
-    private static final float SIDE_THICKNESS = 0.25F;
-
     public static boolean render(final WorldRenderContext context, final WorldRenderContext.BlockOutlineContext outlineContext) {
         final BlockPos hitPos = outlineContext.blockPos();
 
@@ -18,11 +17,9 @@ public final class DirectionalPlacingRenderer {
         final Vec3d camera = new Vec3d(outlineContext.cameraX(), outlineContext.cameraY(), outlineContext.cameraZ());
         final Vec3f look = new Vec3f(0, 0, 1);
         look.transform(new Matrix3f(context.camera().getRotation()));
-        final Vec3d end = camera.add(new Vec3d(look).multiply(100));
+        final Vec3d end = camera.add(new Vec3d(look).multiply(4));
         final BlockHitResult raycast = outlineContext.blockState().getOutlineShape(context.world(), hitPos).raycast(camera, end, hitPos);
-        if (raycast == null) {
-            return false;
-        } else {
+        if (raycast != null && raycast.getType() != HitResult.Type.MISS) {
             final float edgeThickness = (float) TLMItem.DIRECTIONAL_PLACING_EDGE_THICKNESS;
             final float centerRad = 0.5F - edgeThickness;
             matrices.push();
@@ -49,6 +46,7 @@ public final class DirectionalPlacingRenderer {
             matrices.pop();
             return true;
         }
+        return false;
     }
 
     private static void renderSquare(final MatrixStack matrices, final float x, final float y, final float width, final float height, final VertexConsumer consumer) {

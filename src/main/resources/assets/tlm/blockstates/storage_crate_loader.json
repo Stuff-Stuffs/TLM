@@ -1,0 +1,30 @@
+{
+  "variants": {
+    "facing=up": {
+      "model": "tlm:block/storage_crate_loader"
+    },
+    "facing=down": {
+      "model": "tlm:block/storage_crate_loader",
+      "x": 180
+    },
+    "facing=north": {
+      "model": "tlm:block/storage_crate_loader",
+      "x": 90
+    },
+    "facing=south": {
+      "model": "tlm:block/storage_crate_loader",
+      "x": 90,
+      "y": 180
+    },
+    "facing=east": {
+      "model": "tlm:block/storage_crate_loader",
+      "x": 90,
+      "y": 90
+    },
+    "facing=west": {
+      "model": "tlm:block/storage_crate_loader",
+      "x": 90,
+      "y": 270
+    }
+  }
+}

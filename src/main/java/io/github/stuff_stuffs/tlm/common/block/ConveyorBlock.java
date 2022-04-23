@@ -3,7 +3,6 @@ package io.github.stuff_stuffs.tlm.common.block;
 import io.github.stuff_stuffs.tlm.common.api.conveyor.ConveyorOrientation;
 import io.github.stuff_stuffs.tlm.common.block.entity.ConveyorBlockEntity;
 import io.github.stuff_stuffs.tlm.common.block.entity.TLMBlockEntities;
-import io.github.stuff_stuffs.tlm.common.block.properties.TLMBlockProperties;
 import io.github.stuff_stuffs.tlm.common.util.MathUtil;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;

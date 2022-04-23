@@ -2,7 +2,7 @@ package io.github.stuff_stuffs.tlm.common.api.conveyor;
 
 import io.github.stuff_stuffs.tlm.common.api.UnsidedBlockApiCache;
 import io.github.stuff_stuffs.tlm.common.api.item.TLMItem;
-import io.github.stuff_stuffs.tlm.common.block.properties.TLMBlockProperties;
+import io.github.stuff_stuffs.tlm.common.block.TLMBlockProperties;
 import net.fabricmc.fabric.api.lookup.v1.block.BlockApiCache;
 import net.fabricmc.fabric.api.lookup.v1.block.BlockApiLookup;
 import net.minecraft.block.BlockState;
