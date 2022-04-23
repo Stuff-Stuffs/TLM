@@ -9,12 +9,14 @@ import io.github.stuff_stuffs.tlm.client.render.block.entity.LabelerBlockEntityR
 import io.github.stuff_stuffs.tlm.client.render.block.model.UnbakedConveyorBlockModel;
 import io.github.stuff_stuffs.tlm.client.render.block.model.UnbakedLabelerBlockModel;
 import io.github.stuff_stuffs.tlm.client.render.conveyor.ConveyorTrayRenderer;
+import io.github.stuff_stuffs.tlm.client.screen.LabelerBlockHandledScreen;
 import io.github.stuff_stuffs.tlm.common.TLM;
 import io.github.stuff_stuffs.tlm.common.api.item.TLMItem;
 import io.github.stuff_stuffs.tlm.common.api.resource.ConveyedResource;
 import io.github.stuff_stuffs.tlm.common.api.resource.ConveyedResourceType;
 import io.github.stuff_stuffs.tlm.common.api.resource.ConveyorTray;
 import io.github.stuff_stuffs.tlm.common.block.entity.TLMBlockEntities;
+import io.github.stuff_stuffs.tlm.common.screen.TLMScreenHandlerTypes;
 import io.github.stuff_stuffs.tlm.mixin.api.ClientWorldCache;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import net.fabricmc.api.ClientModInitializer;
@@ -24,17 +26,21 @@ import net.fabricmc.fabric.api.client.rendering.v1.BlockEntityRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
+import net.fabricmc.fabric.api.event.client.ClientSpriteRegistryCallback;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
+import net.fabricmc.fabric.impl.client.texture.SpriteRegistryCallbackHolder;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.ingame.HandledScreens;
 import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.item.ItemRenderer;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.json.ModelTransformation;
+import net.minecraft.client.texture.SpriteAtlasTexture;
 import net.minecraft.client.util.Window;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.Item;
@@ -48,10 +54,11 @@ import java.util.Optional;
 
 @SuppressWarnings("UnstableApiUsage")
 public class TLMClient implements ClientModInitializer {
-    private static final Map<ConveyedResourceType<?, ?>, ClientConveyedResourceInfo<?,?>> INFOS = new Reference2ReferenceOpenHashMap<>();
+    private static final Map<ConveyedResourceType<?, ?>, ClientConveyedResourceInfo<?, ?>> INFOS = new Reference2ReferenceOpenHashMap<>();
 
     @Override
     public void onInitializeClient() {
+        HandledScreens.register(TLMScreenHandlerTypes.LABELER_BLOCK_CONFIGURATION_SCREEN_HANDLER_TYPE, LabelerBlockHandledScreen::new);
         ClientBlockEntityEvents.BLOCK_ENTITY_LOAD.register((blockEntity, world) -> ((ClientWorldCache) world).tlm_invalidateCache(blockEntity.getPos()));
         ClientBlockEntityEvents.BLOCK_ENTITY_UNLOAD.register((blockEntity, world) -> ((ClientWorldCache) world).tlm_invalidateCache(blockEntity.getPos()));
         BlockEntityRendererRegistry.register(TLMBlockEntities.CONVEYOR_BLOCK_ENTITY_TYPE, ConveyorBlockEntityRenderer::new);
@@ -61,6 +68,12 @@ public class TLMClient implements ClientModInitializer {
                 return !DirectionalPlacingRenderer.render(context, hitResult);
             }
             return true;
+        });
+        SpriteRegistryCallbackHolder.eventLocal(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE).register(new ClientSpriteRegistryCallback() {
+            @Override
+            public void registerSprites(final SpriteAtlasTexture atlasTexture, final Registry registry) {
+                registry.register(TLM.createId("conveyor/stack_marker"));
+            }
         });
         WorldRenderEvents.AFTER_ENTITIES.register(BlockGhostRenderer::render);
         ModelLoadingRegistry.INSTANCE.registerResourceProvider(manager -> (resourceId, context) -> {

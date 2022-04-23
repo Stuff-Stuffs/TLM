@@ -1,6 +1,8 @@
 package io.github.stuff_stuffs.tlm.common.api.resource;
 
 import com.google.common.base.Preconditions;
+import it.unimi.dsi.fastutil.ints.Int2ReferenceMap;
+import it.unimi.dsi.fastutil.ints.Int2ReferenceOpenHashMap;
 import net.minecraft.nbt.NbtCompound;
 
 import java.util.Arrays;
@@ -115,6 +117,19 @@ public final class ConveyorTrayDataStack {
         State(final int idx, final int color) {
             this.idx = idx;
             this.color = color;
+            Holder.STATES_BY_IDX.put(idx, this);
+        }
+
+        public static State getByIdx(final int idx) {
+            final State state = Holder.STATES_BY_IDX.get(idx);
+            if (state == null) {
+                throw new RuntimeException("Invalid state idx: " + idx);
+            }
+            return state;
+        }
+
+        private static final class Holder {
+            private static final Int2ReferenceMap<State> STATES_BY_IDX = new Int2ReferenceOpenHashMap<>();
         }
     }
 

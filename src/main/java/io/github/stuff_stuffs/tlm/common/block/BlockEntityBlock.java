@@ -6,7 +6,12 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityTicker;
 import net.minecraft.block.entity.BlockEntityType;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.screen.NamedScreenHandlerFactory;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.Hand;
+import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.event.listener.GameEventListener;
@@ -35,6 +40,21 @@ public abstract class BlockEntityBlock<BE extends BlockEntity> extends Block imp
     }
 
     public abstract BlockEntityType<BE> getType();
+
+    @Nullable
+    @Override
+    public NamedScreenHandlerFactory createScreenHandlerFactory(final BlockState state, final World world, final BlockPos pos) {
+        return world.getBlockEntity(pos) instanceof NamedScreenHandlerFactory handlerFactory ? handlerFactory : null;
+    }
+
+    @Override
+    public ActionResult onUse(final BlockState state, final World world, final BlockPos pos, final PlayerEntity player, final Hand hand, final BlockHitResult hit) {
+        if (!world.isClient() && world.getBlockEntity(pos) instanceof NamedScreenHandlerFactory factory) {
+            player.openHandledScreen(factory);
+            return ActionResult.SUCCESS;
+        }
+        return super.onUse(state, world, pos, player, hand, hit);
+    }
 
     @Nullable
     @Override

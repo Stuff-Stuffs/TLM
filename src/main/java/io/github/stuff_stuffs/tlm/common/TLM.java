@@ -3,6 +3,7 @@ package io.github.stuff_stuffs.tlm.common;
 import io.github.stuff_stuffs.tlm.common.api.resource.ConveyedResourceType;
 import io.github.stuff_stuffs.tlm.common.block.TLMBlocks;
 import io.github.stuff_stuffs.tlm.common.item.TLMItems;
+import io.github.stuff_stuffs.tlm.common.screen.TLMScreenHandlerTypes;
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
@@ -17,6 +18,7 @@ public class TLM implements ModInitializer {
         ConveyedResourceType.init();
         TLMBlocks.init();
         TLMItems.init();
+        TLMScreenHandlerTypes.init();
     }
 
     public static Identifier createId(final String path) {
