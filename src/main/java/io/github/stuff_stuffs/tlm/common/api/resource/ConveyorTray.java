@@ -12,6 +12,7 @@ import java.util.Optional;
 public final class ConveyorTray {
     public static final float TRAY_SIZE = 0.75F;
     public static final Vec3d HALF_EXTENTS = new Vec3d(TRAY_SIZE, TRAY_SIZE, TRAY_SIZE);
+    public static final int STACK_COUNT = 2;
     private final ConveyorTrayDataStack firstStack;
     private final ConveyorTrayDataStack secondStack;
     private ConveyedResource<?, ?> resource;

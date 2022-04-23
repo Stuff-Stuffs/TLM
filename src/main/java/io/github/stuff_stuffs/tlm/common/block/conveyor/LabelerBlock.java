@@ -1,7 +1,9 @@
-package io.github.stuff_stuffs.tlm.common.block;
+package io.github.stuff_stuffs.tlm.common.block.conveyor;
 
 import io.github.stuff_stuffs.tlm.common.api.conveyor.ConveyorOrientation;
-import io.github.stuff_stuffs.tlm.common.block.entity.LabelerBlockEntity;
+import io.github.stuff_stuffs.tlm.common.block.BlockEntityBlock;
+import io.github.stuff_stuffs.tlm.common.block.TLMBlockProperties;
+import io.github.stuff_stuffs.tlm.common.block.entity.conveyor.LabelerBlockEntity;
 import io.github.stuff_stuffs.tlm.common.block.entity.TLMBlockEntities;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;

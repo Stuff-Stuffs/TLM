@@ -1,6 +1,8 @@
 package io.github.stuff_stuffs.tlm.common.block;
 
 import io.github.stuff_stuffs.tlm.common.TLM;
+import io.github.stuff_stuffs.tlm.common.block.conveyor.ConveyorBlock;
+import io.github.stuff_stuffs.tlm.common.block.conveyor.LabelerBlock;
 import io.github.stuff_stuffs.tlm.common.block.entity.TLMBlockEntities;
 import io.github.stuff_stuffs.tlm.common.block.storage.StorageCrateBlock;
 import io.github.stuff_stuffs.tlm.common.block.storage.StorageCrateLoaderBlock;

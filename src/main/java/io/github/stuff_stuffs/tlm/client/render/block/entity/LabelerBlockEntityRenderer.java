@@ -2,7 +2,7 @@ package io.github.stuff_stuffs.tlm.client.render.block.entity;
 
 import io.github.stuff_stuffs.tlm.client.render.conveyor.ConveyorTrayRenderer;
 import io.github.stuff_stuffs.tlm.common.api.resource.ConveyorTray;
-import io.github.stuff_stuffs.tlm.common.block.entity.LabelerBlockEntity;
+import io.github.stuff_stuffs.tlm.common.block.entity.conveyor.LabelerBlockEntity;
 import net.minecraft.client.model.ModelPart;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.block.entity.BlockEntityRenderer;

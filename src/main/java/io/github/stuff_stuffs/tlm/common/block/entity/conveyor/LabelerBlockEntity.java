@@ -1,4 +1,4 @@
-package io.github.stuff_stuffs.tlm.common.block.entity;
+package io.github.stuff_stuffs.tlm.common.block.entity.conveyor;
 
 import io.github.stuff_stuffs.tlm.common.api.conveyor.Conveyor;
 import io.github.stuff_stuffs.tlm.common.api.conveyor.ConveyorApi;
@@ -8,6 +8,8 @@ import io.github.stuff_stuffs.tlm.common.api.conveyor.impls.AbstractConveyor;
 import io.github.stuff_stuffs.tlm.common.api.conveyor.impls.LabelerConveyor;
 import io.github.stuff_stuffs.tlm.common.api.resource.ConveyorTrayDataStack;
 import io.github.stuff_stuffs.tlm.common.block.TLMBlockProperties;
+import io.github.stuff_stuffs.tlm.common.block.entity.TLMBlockEntities;
+import io.github.stuff_stuffs.tlm.common.block.entity.conveyor.ConveyorBlockEntity;
 import io.github.stuff_stuffs.tlm.common.network.UpdatingBlockEntitySender;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;

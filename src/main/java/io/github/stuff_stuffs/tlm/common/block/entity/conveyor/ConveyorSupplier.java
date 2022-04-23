@@ -1,4 +1,4 @@
-package io.github.stuff_stuffs.tlm.common.block.entity;
+package io.github.stuff_stuffs.tlm.common.block.entity.conveyor;
 
 import io.github.stuff_stuffs.tlm.common.api.conveyor.Conveyor;
 import io.github.stuff_stuffs.tlm.common.api.conveyor.ConveyorAccess;
