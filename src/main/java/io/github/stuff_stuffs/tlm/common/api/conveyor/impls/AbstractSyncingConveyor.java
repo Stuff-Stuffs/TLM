@@ -32,11 +32,13 @@ public abstract class AbstractSyncingConveyor extends AbstractConveyor {
         }
     }
 
-    private static float fromByte(final byte b) {
+    //TODO fix this
+    public static float fromByte(final byte b) {
         return ((int) b - Byte.MIN_VALUE) / (float) (Byte.MAX_VALUE - Byte.MIN_VALUE);
     }
 
-    private static byte toByte(float f) {
+    //TODO fix this
+    public static byte toByte(float f) {
         if (f > 1.0F) {
             f = 1.0F;
         } else if (f < 0.0F) {

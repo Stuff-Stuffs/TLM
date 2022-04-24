@@ -41,7 +41,7 @@ public class LabelerBlockScreenHandler extends ScreenHandler {
 
             @Override
             public void set(final int value) {
-                labeler.setLabelState(ConveyorTrayDataStack.State.getByIdx(value));
+                labeler.setLabelState(ConveyorTrayDataStack.State.getByIdx(value % ConveyorTrayDataStack.State.values().length));
             }
         };
         addProperty(labelState);
@@ -53,7 +53,7 @@ public class LabelerBlockScreenHandler extends ScreenHandler {
             MinecraftClient.getInstance().interactionManager.clickButton(syncId, id);
         } else if (isServer()) {
             if (id == SWITCH_LABEL_STATE_BUTTON_ID) {
-                labelState.set((labelState.get() + 1) % ConveyorTrayDataStack.State.values().length);
+                labelState.set(labelState.get() + 1);
                 sendContentUpdates();
             }
         }

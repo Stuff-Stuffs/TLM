@@ -7,6 +7,7 @@ import io.github.stuff_stuffs.tlm.common.block.TLMBlocks;
 import io.github.stuff_stuffs.tlm.common.block.entity.conveyor.ConveyorBlockEntity;
 import io.github.stuff_stuffs.tlm.common.block.entity.conveyor.ConveyorSupplier;
 import io.github.stuff_stuffs.tlm.common.block.entity.conveyor.LabelerBlockEntity;
+import io.github.stuff_stuffs.tlm.common.block.entity.conveyor.TwoSplitterConveyorBlockEntity;
 import io.github.stuff_stuffs.tlm.common.block.entity.storage.StorageCrateBlockEntity;
 import io.github.stuff_stuffs.tlm.common.block.entity.storage.StorageCrateLoaderBlockEntity;
 import io.github.stuff_stuffs.tlm.common.block.entity.storage.StorageCrateUnloaderBlockEntity;
@@ -22,6 +23,8 @@ public final class TLMBlockEntities {
 
     public static final BlockEntityType<LabelerBlockEntity> LABELER_BLOCK_ENTITY_BLOCK_TYPE = FabricBlockEntityTypeBuilder.create(LabelerBlockEntity::new, TLMBlocks.LABELER_BLOCK).build();
 
+    public static final BlockEntityType<TwoSplitterConveyorBlockEntity> TWO_SPLITTER_CONVEYOR_BLOCK_ENTITY_TYPE = FabricBlockEntityTypeBuilder.create(TwoSplitterConveyorBlockEntity::new, TLMBlocks.TWO_SPLITTER_CONVEYOR_BLOCK).build();
+
     public static void init() {
         Registry.register(Registry.BLOCK_ENTITY_TYPE, TLM.createId("conveyor"), CONVEYOR_BLOCK_ENTITY_TYPE);
         ConveyorApi.CONVEYOR_ACCESS_BLOCK_API_LOOKUP.registerForBlockEntity((blockEntity, unused) -> blockEntity.getConveyorAccess(), CONVEYOR_BLOCK_ENTITY_TYPE);
@@ -32,12 +35,18 @@ public final class TLMBlockEntities {
         StorageApi.STORAGE_CRATE_BLOCK_API_LOOKUP.registerForBlockEntity((blockEntity, unused) -> blockEntity, STORAGE_CRATE_BLOCK_ENTITY_TYPE);
 
         Registry.register(Registry.BLOCK_ENTITY_TYPE, TLM.createId("storage_crate_unloader"), STORAGE_CRATE_UNLOADER_BLOCK_ENTITY_TYPE);
+
         Registry.register(Registry.BLOCK_ENTITY_TYPE, TLM.createId("storage_crate_loader"), STORAGE_CRATE_LOADER_BLOCK_ENTITY_TYPE);
 
         Registry.register(Registry.BLOCK_ENTITY_TYPE, TLM.createId("labeler"), LABELER_BLOCK_ENTITY_BLOCK_TYPE);
         ConveyorApi.CONVEYOR_ACCESS_BLOCK_API_LOOKUP.registerForBlockEntity((blockEntity, unused) -> blockEntity.getConveyorAccess(), LABELER_BLOCK_ENTITY_BLOCK_TYPE);
         ConveyorApi.CONVEYOR_LIKE_BLOCK_API_LOOKUP.registerForBlockEntity(ConveyorSupplier::getConveyor, LABELER_BLOCK_ENTITY_BLOCK_TYPE);
         ConveyorApi.CONVEYOR_BLOCK_API_LOOKUP.registerForBlockEntity(ConveyorSupplier::getConveyor, LABELER_BLOCK_ENTITY_BLOCK_TYPE);
+
+        Registry.register(Registry.BLOCK_ENTITY_TYPE, TLM.createId("two_way_splitter_conveyor"), TWO_SPLITTER_CONVEYOR_BLOCK_ENTITY_TYPE);
+        ConveyorApi.CONVEYOR_ACCESS_BLOCK_API_LOOKUP.registerForBlockEntity((blockEntity, unused) -> blockEntity.getConveyorAccess(), TWO_SPLITTER_CONVEYOR_BLOCK_ENTITY_TYPE);
+        ConveyorApi.CONVEYOR_LIKE_BLOCK_API_LOOKUP.registerForBlockEntity(ConveyorSupplier::getConveyor, TWO_SPLITTER_CONVEYOR_BLOCK_ENTITY_TYPE);
+        ConveyorApi.CONVEYOR_BLOCK_API_LOOKUP.registerForBlockEntity(ConveyorSupplier::getConveyor, TWO_SPLITTER_CONVEYOR_BLOCK_ENTITY_TYPE);
     }
 
     private TLMBlockEntities() {

@@ -3,6 +3,7 @@ package io.github.stuff_stuffs.tlm.common.block;
 import io.github.stuff_stuffs.tlm.common.TLM;
 import io.github.stuff_stuffs.tlm.common.block.conveyor.ConveyorBlock;
 import io.github.stuff_stuffs.tlm.common.block.conveyor.LabelerBlock;
+import io.github.stuff_stuffs.tlm.common.block.conveyor.TwoSplitterConveyorBlock;
 import io.github.stuff_stuffs.tlm.common.block.entity.TLMBlockEntities;
 import io.github.stuff_stuffs.tlm.common.block.storage.StorageCrateBlock;
 import io.github.stuff_stuffs.tlm.common.block.storage.StorageCrateLoaderBlock;
@@ -17,6 +18,7 @@ public final class TLMBlocks {
     public static final StorageCrateUnloaderBlock STORAGE_CRATE_UNLOADER_BLOCK = new StorageCrateUnloaderBlock(FabricBlockSettings.copyOf(Blocks.IRON_BLOCK));
     public static final StorageCrateLoaderBlock STORAGE_CRATE_LOADER_BLOCK = new StorageCrateLoaderBlock(FabricBlockSettings.copyOf(Blocks.IRON_BLOCK));
     public static final LabelerBlock LABELER_BLOCK = new LabelerBlock(FabricBlockSettings.copyOf(Blocks.IRON_BLOCK));
+    public static final TwoSplitterConveyorBlock TWO_SPLITTER_CONVEYOR_BLOCK = new TwoSplitterConveyorBlock(FabricBlockSettings.copyOf(Blocks.IRON_BLOCK));
 
     public static void init() {
         Registry.register(Registry.BLOCK, TLM.createId("conveyor"), CONVEYOR_BLOCK);
@@ -24,6 +26,7 @@ public final class TLMBlocks {
         Registry.register(Registry.BLOCK, TLM.createId("storage_crate_unloader"), STORAGE_CRATE_UNLOADER_BLOCK);
         Registry.register(Registry.BLOCK, TLM.createId("storage_crate_loader"), STORAGE_CRATE_LOADER_BLOCK);
         Registry.register(Registry.BLOCK, TLM.createId("labeler"), LABELER_BLOCK);
+        Registry.register(Registry.BLOCK, TLM.createId("two_way_splitter_conveyor"), TWO_SPLITTER_CONVEYOR_BLOCK);
         TLMBlockEntities.init();
     }
 

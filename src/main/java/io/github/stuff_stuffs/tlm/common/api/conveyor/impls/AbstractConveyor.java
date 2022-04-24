@@ -119,7 +119,7 @@ public abstract class AbstractConveyor implements ConveyorAccess {
 
     public abstract void setup(Supplier<ConveyorLike> inputConveyorLikeCache, Supplier<ConveyorLike> outputConveyorLikeCache, Supplier<Conveyor> outputConveyorCache);
 
-    private static <T> int getInsertIndex(final List<? extends T> list, final T toInsert, final Comparator<? super T> comparator) {
+    public static <T> int getInsertIndex(final List<? extends T> list, final T toInsert, final Comparator<? super T> comparator) {
         int low = 0;
         int high = list.size() - 1;
         while (low <= high) {

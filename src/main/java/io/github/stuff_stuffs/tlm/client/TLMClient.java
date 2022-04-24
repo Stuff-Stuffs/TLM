@@ -6,8 +6,10 @@ import io.github.stuff_stuffs.tlm.client.render.ConveyedResourceHud;
 import io.github.stuff_stuffs.tlm.client.render.DirectionalPlacingRenderer;
 import io.github.stuff_stuffs.tlm.client.render.block.entity.ConveyorBlockEntityRenderer;
 import io.github.stuff_stuffs.tlm.client.render.block.entity.LabelerBlockEntityRenderer;
+import io.github.stuff_stuffs.tlm.client.render.block.entity.TwoSplitterConveyorBlockEntityRenderer;
 import io.github.stuff_stuffs.tlm.client.render.block.model.UnbakedConveyorBlockModel;
 import io.github.stuff_stuffs.tlm.client.render.block.model.UnbakedLabelerBlockModel;
+import io.github.stuff_stuffs.tlm.client.render.block.model.UnbakedTwoSplitterConveyorBlockModel;
 import io.github.stuff_stuffs.tlm.client.render.conveyor.ConveyorTrayRenderer;
 import io.github.stuff_stuffs.tlm.client.screen.LabelerBlockHandledScreen;
 import io.github.stuff_stuffs.tlm.common.TLM;
@@ -63,6 +65,7 @@ public class TLMClient implements ClientModInitializer {
         ClientBlockEntityEvents.BLOCK_ENTITY_UNLOAD.register((blockEntity, world) -> ((ClientWorldCache) world).tlm_invalidateCache(blockEntity.getPos()));
         BlockEntityRendererRegistry.register(TLMBlockEntities.CONVEYOR_BLOCK_ENTITY_TYPE, ConveyorBlockEntityRenderer::new);
         BlockEntityRendererRegistry.register(TLMBlockEntities.LABELER_BLOCK_ENTITY_BLOCK_TYPE, LabelerBlockEntityRenderer::new);
+        BlockEntityRendererRegistry.register(TLMBlockEntities.TWO_SPLITTER_CONVEYOR_BLOCK_ENTITY_TYPE, TwoSplitterConveyorBlockEntityRenderer::new);
         WorldRenderEvents.BLOCK_OUTLINE.register((context, hitResult) -> {
             if (MinecraftClient.getInstance().player.getStackInHand(Hand.MAIN_HAND).getItem() instanceof TLMItem item && item.hasDirectionalPlacing()) {
                 return !DirectionalPlacingRenderer.render(context, hitResult);
@@ -85,6 +88,9 @@ public class TLMClient implements ClientModInitializer {
                 }
                 if ("block/labeler".equals(path)) {
                     return new UnbakedLabelerBlockModel();
+                }
+                if ("block/two_way_splitter_conveyor".equals(path)) {
+                    return new UnbakedTwoSplitterConveyorBlockModel();
                 }
             }
             return null;
