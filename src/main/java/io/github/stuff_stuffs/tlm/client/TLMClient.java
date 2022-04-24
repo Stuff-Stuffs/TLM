@@ -4,9 +4,7 @@ import io.github.stuff_stuffs.tlm.client.network.UpdatingBlockEntityReceiver;
 import io.github.stuff_stuffs.tlm.client.render.BlockGhostRenderer;
 import io.github.stuff_stuffs.tlm.client.render.ConveyedResourceHud;
 import io.github.stuff_stuffs.tlm.client.render.DirectionalPlacingRenderer;
-import io.github.stuff_stuffs.tlm.client.render.block.entity.ConveyorBlockEntityRenderer;
-import io.github.stuff_stuffs.tlm.client.render.block.entity.LabelerBlockEntityRenderer;
-import io.github.stuff_stuffs.tlm.client.render.block.entity.TwoSplitterConveyorBlockEntityRenderer;
+import io.github.stuff_stuffs.tlm.client.render.block.entity.ConveyorSupplierBlockEntityRenderer;
 import io.github.stuff_stuffs.tlm.client.render.block.model.UnbakedConveyorBlockModel;
 import io.github.stuff_stuffs.tlm.client.render.block.model.UnbakedLabelerBlockModel;
 import io.github.stuff_stuffs.tlm.client.render.block.model.UnbakedTwoSplitterConveyorBlockModel;
@@ -63,9 +61,9 @@ public class TLMClient implements ClientModInitializer {
         HandledScreens.register(TLMScreenHandlerTypes.LABELER_BLOCK_CONFIGURATION_SCREEN_HANDLER_TYPE, LabelerBlockHandledScreen::new);
         ClientBlockEntityEvents.BLOCK_ENTITY_LOAD.register((blockEntity, world) -> ((ClientWorldCache) world).tlm_invalidateCache(blockEntity.getPos()));
         ClientBlockEntityEvents.BLOCK_ENTITY_UNLOAD.register((blockEntity, world) -> ((ClientWorldCache) world).tlm_invalidateCache(blockEntity.getPos()));
-        BlockEntityRendererRegistry.register(TLMBlockEntities.CONVEYOR_BLOCK_ENTITY_TYPE, ConveyorBlockEntityRenderer::new);
-        BlockEntityRendererRegistry.register(TLMBlockEntities.LABELER_BLOCK_ENTITY_BLOCK_TYPE, LabelerBlockEntityRenderer::new);
-        BlockEntityRendererRegistry.register(TLMBlockEntities.TWO_SPLITTER_CONVEYOR_BLOCK_ENTITY_TYPE, TwoSplitterConveyorBlockEntityRenderer::new);
+        BlockEntityRendererRegistry.register(TLMBlockEntities.CONVEYOR_BLOCK_ENTITY_TYPE, ConveyorSupplierBlockEntityRenderer::new);
+        BlockEntityRendererRegistry.register(TLMBlockEntities.LABELER_BLOCK_ENTITY_BLOCK_TYPE, ConveyorSupplierBlockEntityRenderer::new);
+        BlockEntityRendererRegistry.register(TLMBlockEntities.TWO_SPLITTER_CONVEYOR_BLOCK_ENTITY_TYPE, ConveyorSupplierBlockEntityRenderer::new);
         WorldRenderEvents.BLOCK_OUTLINE.register((context, hitResult) -> {
             if (MinecraftClient.getInstance().player.getStackInHand(Hand.MAIN_HAND).getItem() instanceof TLMItem item && item.hasDirectionalPlacing()) {
                 return !DirectionalPlacingRenderer.render(context, hitResult);

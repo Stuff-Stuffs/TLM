@@ -2,7 +2,8 @@ package io.github.stuff_stuffs.tlm.client.render.block.entity;
 
 import io.github.stuff_stuffs.tlm.client.render.conveyor.ConveyorTrayRenderer;
 import io.github.stuff_stuffs.tlm.common.api.resource.ConveyorTray;
-import io.github.stuff_stuffs.tlm.common.block.entity.conveyor.ConveyorBlockEntity;
+import io.github.stuff_stuffs.tlm.common.block.entity.conveyor.ConveyorSupplier;
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.model.ModelPart;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.block.entity.BlockEntityRenderer;
@@ -13,15 +14,15 @@ import net.minecraft.util.math.Vec3d;
 
 import java.util.Iterator;
 
-public class ConveyorBlockEntityRenderer implements BlockEntityRenderer<ConveyorBlockEntity> {
-    private final ModelPart trayModel;
+public class ConveyorSupplierBlockEntityRenderer<T extends BlockEntity & ConveyorSupplier> implements BlockEntityRenderer<T> {
+    protected final ModelPart trayModel;
 
-    public ConveyorBlockEntityRenderer(final BlockEntityRendererFactory.Context context) {
+    public ConveyorSupplierBlockEntityRenderer(final BlockEntityRendererFactory.Context context) {
         trayModel = context.getLayerModelPart(ConveyorTrayRenderer.CONVEYOR_TRAY_LAYER);
     }
 
     @Override
-    public void render(final ConveyorBlockEntity entity, final float tickDelta, final MatrixStack matrices, final VertexConsumerProvider vertexConsumers, final int light, final int overlay) {
+    public void render(T entity, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay) {
         final Iterator<ConveyorTray> iterator = entity.getConveyorAccess().getTrays();
         matrices.push();
         final BlockPos pos = entity.getPos();
