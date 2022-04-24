@@ -215,9 +215,10 @@ public class TwoSplitterConveyor implements ConveyorAccess {
             return ConveyorTray.TRAY_SIZE/2.0F;
         }
         final Direction.Axis axis = side.getAxis();
+        final Iterator<AbstractConveyor.Entry> trays = Stream.concat(Stream.concat(inEntries.stream(), out0Entries.stream()), out1Entries.stream()).iterator();
+        float p;
         if (side.getDirection() == Direction.AxisDirection.POSITIVE) {
-            final Iterator<AbstractConveyor.Entry> trays = Stream.concat(Stream.concat(inEntries.stream(), out0Entries.stream()), out1Entries.stream()).iterator();
-            float p = Float.NEGATIVE_INFINITY;
+            p = Float.NEGATIVE_INFINITY;
             while (trays.hasNext()) {
                 final AbstractConveyor.Entry next = trays.next();
                 final Box bounds = next.tray.getBounds(1);
@@ -226,10 +227,8 @@ public class TwoSplitterConveyor implements ConveyorAccess {
                     p = Math.max(p, (float) axis.choose(center.x, center.y, center.z));
                 }
             }
-            return (float) Math.max(Math.abs(p - (0.5 - ConveyorTray.TRAY_SIZE/2.0F) - axis.choose(center.x, center.y, center.z)),0);
         } else {
-            final Iterator<AbstractConveyor.Entry> trays = Stream.concat(Stream.concat(inEntries.stream(), out0Entries.stream()), out1Entries.stream()).iterator();
-            float p = Float.POSITIVE_INFINITY;
+            p = Float.POSITIVE_INFINITY;
             while (trays.hasNext()) {
                 final AbstractConveyor.Entry next = trays.next();
                 final Box bounds = next.tray.getBounds(1);
@@ -238,8 +237,8 @@ public class TwoSplitterConveyor implements ConveyorAccess {
                     p = Math.min(p, (float) axis.choose(center.x, center.y, center.z));
                 }
             }
-            return (float) Math.max(Math.abs(p - (0.5 - ConveyorTray.TRAY_SIZE/2.0F) - axis.choose(center.x, center.y, center.z)),0);
         }
+        return (float) Math.max(Math.abs(p - (0.5 - ConveyorTray.TRAY_SIZE/2.0F) - axis.choose(center.x, center.y, center.z)),0);
     }
 
     private float computeOverlap(final Direction side) {
@@ -247,9 +246,10 @@ public class TwoSplitterConveyor implements ConveyorAccess {
             return 0;
         }
         final Direction.Axis axis = side.getAxis();
+        final Iterator<AbstractConveyor.Entry> trays = Stream.concat(Stream.concat(inEntries.stream(), out0Entries.stream()), out1Entries.stream()).iterator();
+        float p;
         if (side.getDirection() == Direction.AxisDirection.POSITIVE) {
-            final Iterator<AbstractConveyor.Entry> trays = Stream.concat(Stream.concat(inEntries.stream(), out0Entries.stream()), out1Entries.stream()).iterator();
-            float p = Float.NEGATIVE_INFINITY;
+            p = Float.NEGATIVE_INFINITY;
             while (trays.hasNext()) {
                 final AbstractConveyor.Entry next = trays.next();
                 final Box bounds = next.tray.getBounds(1);
@@ -258,10 +258,8 @@ public class TwoSplitterConveyor implements ConveyorAccess {
                     p = Math.max(p, (float) axis.choose(center.x, center.y, center.z));
                 }
             }
-            return (float) Math.max(Math.abs(p - axis.choose(center.x, center.y, center.z)) - 0.5,0);
         } else {
-            final Iterator<AbstractConveyor.Entry> trays = Stream.concat(Stream.concat(inEntries.stream(), out0Entries.stream()), out1Entries.stream()).iterator();
-            float p = Float.POSITIVE_INFINITY;
+            p = Float.POSITIVE_INFINITY;
             while (trays.hasNext()) {
                 final AbstractConveyor.Entry next = trays.next();
                 final Box bounds = next.tray.getBounds(1);
@@ -270,8 +268,8 @@ public class TwoSplitterConveyor implements ConveyorAccess {
                     p = Math.min(p, (float) axis.choose(center.x, center.y, center.z));
                 }
             }
-            return (float) Math.max(Math.abs(p - axis.choose(center.x, center.y, center.z)) - 0.5,0);
         }
+        return (float) Math.max(Math.abs(p - axis.choose(center.x, center.y, center.z)) - 0.5,0);
     }
 
     private float computeMinY(final @Nullable Direction side, final float overlap) {
