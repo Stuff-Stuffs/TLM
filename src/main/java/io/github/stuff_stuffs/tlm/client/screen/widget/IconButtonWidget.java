@@ -1,6 +1,5 @@
 package io.github.stuff_stuffs.tlm.client.screen.widget;
 
-import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.render.*;
@@ -36,14 +35,12 @@ public class IconButtonWidget extends ButtonWidget {
         RenderSystem.setShader(GameRenderer::getPositionColorTexShader);
         RenderSystem.setShaderTexture(0, SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE);
         RenderSystem.enableTexture();
-        RenderSystem.disableBlend();
-        RenderSystem.disableDepthTest();
         final BufferBuilder bufferBuilder = Tessellator.getInstance().getBuffer();
         bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE);
-        bufferBuilder.vertex(matrix, x0, y1, 0).color(colour).texture(u0, v1).next();
-        bufferBuilder.vertex(matrix, x1, y1, 0).color(colour).texture(u1, v1).next();
-        bufferBuilder.vertex(matrix, x1, y0, 0).color(colour).texture(u1, v0).next();
-        bufferBuilder.vertex(matrix, x0, y0, 0).color(colour).texture(u0, v0).next();
+        bufferBuilder.vertex(matrix, x0, y1, 1).color(colour).texture(u0, v1).next();
+        bufferBuilder.vertex(matrix, x1, y1, 1).color(colour).texture(u1, v1).next();
+        bufferBuilder.vertex(matrix, x1, y0, 1).color(colour).texture(u1, v0).next();
+        bufferBuilder.vertex(matrix, x0, y0, 1).color(colour).texture(u0, v0).next();
         bufferBuilder.end();
         BufferRenderer.draw(bufferBuilder);
     }

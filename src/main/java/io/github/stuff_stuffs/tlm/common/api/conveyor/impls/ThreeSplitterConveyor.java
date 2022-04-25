@@ -19,16 +19,18 @@ import java.util.stream.Stream;
 
 import static io.github.stuff_stuffs.tlm.common.api.conveyor.impls.AbstractSyncingConveyor.fromByte;
 
-public class TwoSplitterConveyor implements ConveyorAccess {
+public class ThreeSplitterConveyor implements ConveyorAccess {
     private static final Comparator<AbstractConveyor.Entry> COMPARATOR = Comparator.comparingDouble(entry -> entry.pos);
-    private final List<AbstractConveyor.Entry> inEntries = new ArrayList<>();
-    private final List<AbstractConveyor.Entry> out0Entries = new ArrayList<>();
-    private final List<AbstractConveyor.Entry> out1Entries = new ArrayList<>();
+    private final List<AbstractConveyor.Entry> inEntries = new ArrayList<>(3);
+    private final List<AbstractConveyor.Entry> out0Entries = new ArrayList<>(3);
+    private final List<AbstractConveyor.Entry> out1Entries = new ArrayList<>(3);
+    private final List<AbstractConveyor.Entry> out2Entries = new ArrayList<>(3);
     private final Map<Direction, @Nullable Conveyor> conveyorCache;
     private final float speed;
     private final Direction inSide;
     private final Direction out0Side;
     private final Direction out1Side;
+    private final Direction out2Side;
     private final Vec3d start;
     private final Vec3d center;
     private final Vec3d startDelta;
@@ -37,6 +39,8 @@ public class TwoSplitterConveyor implements ConveyorAccess {
     private final float end0Length;
     private final Vec3d end1Delta;
     private final float end1Length;
+    private final Vec3d end2Delta;
+    private final float end2Length;
     private final Cache cache = new Cache();
     private Decider decider;
     private boolean syncNeeded = false;
@@ -45,14 +49,17 @@ public class TwoSplitterConveyor implements ConveyorAccess {
     private Supplier<Conveyor> output0ConveyorCache;
     private Supplier<ConveyorLike> output1ConveyorLikeCache;
     private Supplier<Conveyor> output1ConveyorCache;
+    private Supplier<ConveyorLike> output2ConveyorLikeCache;
+    private Supplier<Conveyor> output2ConveyorCache;
 
-    public TwoSplitterConveyor(final float speed, final Direction facing, final BlockPos pos, final Decider decider) {
+    public ThreeSplitterConveyor(final float speed, final Direction facing, final BlockPos pos, final Decider decider) {
         this.speed = speed;
         this.decider = decider;
         Preconditions.checkArgument(facing.getAxis() != Direction.Axis.Y);
         inSide = facing;
         out0Side = inSide.rotateYClockwise();
         out1Side = inSide.rotateYCounterclockwise();
+        out2Side = inSide.getOpposite();
         center = Vec3d.ofCenter(pos).add(0, -4 / 12.0, 0);
         start = center.withBias(inSide, 0.5);
         startDelta = center.subtract(start);
@@ -61,6 +68,8 @@ public class TwoSplitterConveyor implements ConveyorAccess {
         end0Length = 0.5F;
         end1Delta = center.withBias(out1Side, -0.5).subtract(center);
         end1Length = 0.5F;
+        end2Delta = center.withBias(inSide, -0.5);
+        end2Length = 0.5F;
         conveyorCache = new EnumMap<>(Direction.class);
     }
 
@@ -139,6 +148,17 @@ public class TwoSplitterConveyor implements ConveyorAccess {
         } else if (output1ConveyorLikeCache != null) {
             cache.out1 = output1ConveyorLikeCache.get();
         }
+        if (output2ConveyorCache != null) {
+            final Conveyor output = output2ConveyorCache.get();
+            cache.output2 = output;
+            if (output != null) {
+                cache.out2 = output;
+            } else if (output2ConveyorLikeCache != null) {
+                cache.out2 = output2ConveyorLikeCache.get();
+            }
+        } else if (output2ConveyorLikeCache != null) {
+            cache.out2 = output2ConveyorLikeCache.get();
+        }
     }
 
     private float computeMinPos(final Branch branch) {
@@ -155,7 +175,6 @@ public class TwoSplitterConveyor implements ConveyorAccess {
             }
             final AbstractConveyor.Entry entry = inEntries.get(0);
             if (entry.pos + ConveyorTray.TRAY_SIZE > startLength) {
-                //TODO maybe TRAY_SIZE?
                 return startLength + ConveyorTray.TRAY_SIZE;
             }
             return startLength;
@@ -164,21 +183,25 @@ public class TwoSplitterConveyor implements ConveyorAccess {
 
     private float computeMaxPos(final Branch branch) {
         if (branch == Branch.NONE) {
-            final float max = startLength;
-            if (out0Entries.isEmpty() && out1Entries.isEmpty()) {
+            float max = startLength;
+            if (out0Entries.isEmpty() && out1Entries.isEmpty() && out2Entries.isEmpty()) {
                 return max;
             }
             if (!out0Entries.isEmpty()) {
                 final AbstractConveyor.Entry entry = out0Entries.get(out0Entries.size() - 1);
                 if (entry.pos - ConveyorTray.TRAY_SIZE < startLength) {
-                    return startLength - ConveyorTray.TRAY_SIZE;
+                    max = Math.min(max, startLength - ConveyorTray.TRAY_SIZE);
                 }
             }
             if (!out1Entries.isEmpty()) {
                 final AbstractConveyor.Entry entry = out1Entries.get(out1Entries.size() - 1);
                 if (entry.pos - ConveyorTray.TRAY_SIZE < startLength) {
-                    return startLength - ConveyorTray.TRAY_SIZE;
+                    max = Math.min(max, startLength - ConveyorTray.TRAY_SIZE);
                 }
+            }
+            if (!out2Entries.isEmpty()) {
+                final AbstractConveyor.Entry entry = out2Entries.get(out2Entries.size() - 1);
+                max = Math.min(max, entry.pos - ConveyorTray.TRAY_SIZE);
             }
             return max;
         } else if (branch == Branch.LEFT) {
@@ -189,13 +212,21 @@ public class TwoSplitterConveyor implements ConveyorAccess {
             max += Math.min(ConveyorTray.TRAY_SIZE / 2.0F, cache.out0.getMaximumOverlap());
             max -= cache.out0.getOverlapping();
             return max;
-        } else {
+        } else if (branch == Branch.RIGHT) {
             float max = startLength + end1Length - ConveyorTray.TRAY_SIZE / 2.0F;
             if (cache.out1 == null) {
                 return max;
             }
             max += Math.min(ConveyorTray.TRAY_SIZE / 2.0F, cache.out1.getMaximumOverlap());
             max -= cache.out1.getOverlapping();
+            return max;
+        } else {
+            float max = startLength + end2Length - ConveyorTray.TRAY_SIZE / 2.0F;
+            if (cache.out2 == null) {
+                return max;
+            }
+            max += Math.min(ConveyorTray.TRAY_SIZE / 2.0F, cache.out2.getMaximumOverlap());
+            max -= cache.out2.getOverlapping();
             return max;
         }
     }
@@ -207,12 +238,15 @@ public class TwoSplitterConveyor implements ConveyorAccess {
         if (branch == Branch.LEFT) {
             return out0Entries.isEmpty() ? Float.POSITIVE_INFINITY : out0Entries.get(out0Entries.size() - 1).getPos() - ConveyorTray.TRAY_SIZE;
         }
-        return out1Entries.isEmpty() ? Float.POSITIVE_INFINITY : out1Entries.get(out1Entries.size() - 1).getPos() - ConveyorTray.TRAY_SIZE;
+        if (branch == Branch.RIGHT) {
+            return out1Entries.isEmpty() ? Float.POSITIVE_INFINITY : out1Entries.get(out1Entries.size() - 1).getPos() - ConveyorTray.TRAY_SIZE;
+        }
+        return out2Entries.isEmpty() ? Float.POSITIVE_INFINITY : out2Entries.get(out2Entries.size() - 1).getPos() - ConveyorTray.TRAY_SIZE;
     }
 
     private float computeMaxOverlap(final Direction side) {
-        if(inEntries.isEmpty()&&out0Entries.isEmpty()&&out1Entries.isEmpty()) {
-            return ConveyorTray.TRAY_SIZE/2.0F;
+        if (inEntries.isEmpty() && out0Entries.isEmpty() && out1Entries.isEmpty()) {
+            return ConveyorTray.TRAY_SIZE / 2.0F;
         }
         final Direction.Axis axis = side.getAxis();
         final Iterator<AbstractConveyor.Entry> trays = Stream.concat(Stream.concat(inEntries.stream(), out0Entries.stream()), out1Entries.stream()).iterator();
@@ -238,11 +272,11 @@ public class TwoSplitterConveyor implements ConveyorAccess {
                 }
             }
         }
-        return (float) Math.max(Math.abs(p - (0.5 - ConveyorTray.TRAY_SIZE/2.0F) - axis.choose(center.x, center.y, center.z)),0);
+        return (float) Math.max(Math.abs(p - (0.5 - ConveyorTray.TRAY_SIZE / 2.0F) - axis.choose(center.x, center.y, center.z)), 0);
     }
 
     private float computeOverlap(final Direction side) {
-        if(inEntries.isEmpty()&&out0Entries.isEmpty()&&out1Entries.isEmpty()) {
+        if (inEntries.isEmpty() && out0Entries.isEmpty() && out1Entries.isEmpty()) {
             return 0;
         }
         final Direction.Axis axis = side.getAxis();
@@ -269,7 +303,7 @@ public class TwoSplitterConveyor implements ConveyorAccess {
                 }
             }
         }
-        return (float) Math.max(Math.abs(p - axis.choose(center.x, center.y, center.z)) - 0.5,0);
+        return (float) Math.max(Math.abs(p - axis.choose(center.x, center.y, center.z)) - 0.5, 0);
     }
 
     private float computeMinY(final @Nullable Direction side, final float overlap) {
@@ -277,16 +311,16 @@ public class TwoSplitterConveyor implements ConveyorAccess {
     }
 
     private @Nullable Conveyor computeConveyor(final Direction side) {
-        if (side == inSide || side == out0Side || side == out1Side) {
+        if (side == inSide || side == out0Side || side == out1Side || side == out2Side) {
             return new Conveyor() {
                 @Override
                 public boolean tryInsert(final ConveyorTray tray, final float tickUsed) {
-                    return TwoSplitterConveyor.this.tryInsert(side, tray, tickUsed);
+                    return ThreeSplitterConveyor.this.tryInsert(side, tray, tickUsed);
                 }
 
                 @Override
                 public Iterator<ConveyorTray> getTrays() {
-                    return TwoSplitterConveyor.this.getTrays();
+                    return ThreeSplitterConveyor.this.getTrays();
                 }
 
                 @Override
@@ -309,12 +343,12 @@ public class TwoSplitterConveyor implements ConveyorAccess {
             return new Conveyor() {
                 @Override
                 public boolean tryInsert(final ConveyorTray tray, final float tickUsed) {
-                    return TwoSplitterConveyor.this.tryInsert(null, tray, tickUsed);
+                    return ThreeSplitterConveyor.this.tryInsert(null, tray, tickUsed);
                 }
 
                 @Override
                 public Iterator<ConveyorTray> getTrays() {
-                    return TwoSplitterConveyor.this.getTrays();
+                    return ThreeSplitterConveyor.this.getTrays();
                 }
 
                 @Override
@@ -339,6 +373,7 @@ public class TwoSplitterConveyor implements ConveyorAccess {
     public void tick() {
         updateCache();
         tick(Branch.NONE, inEntries);
+        tick(Branch.STRAIGHT, out2Entries);
         tick(Branch.LEFT, out0Entries);
         tick(Branch.RIGHT, out1Entries);
     }
@@ -387,7 +422,7 @@ public class TwoSplitterConveyor implements ConveyorAccess {
             final Dir dir = decider.decide(entry.tray);
             if (dir == Dir.LEFT) {
                 final float minPos = computeMinPos(Branch.LEFT);
-                if (minPos-startLength > ConveyorTray.TRAY_SIZE / 2.0F) {
+                if (minPos - startLength > ConveyorTray.TRAY_SIZE / 2.0F) {
                     return false;
                 }
                 final float maxPos = Math.min(computeMaxPos(Branch.LEFT), getLastPos(Branch.LEFT));
@@ -398,9 +433,9 @@ public class TwoSplitterConveyor implements ConveyorAccess {
                 final int index = AbstractConveyor.getInsertIndex(out0Entries, entry, COMPARATOR);
                 out0Entries.add(index, entry);
                 updatePosition(Branch.LEFT, entry, false);
-            } else {
+            } else if (dir == Dir.RIGHT) {
                 final float minPos = computeMinPos(Branch.RIGHT);
-                if (minPos-startLength > ConveyorTray.TRAY_SIZE / 2.0F) {
+                if (minPos - startLength > ConveyorTray.TRAY_SIZE / 2.0F) {
                     return false;
                 }
                 final float maxPos = Math.min(computeMaxPos(Branch.RIGHT), getLastPos(Branch.RIGHT));
@@ -411,6 +446,19 @@ public class TwoSplitterConveyor implements ConveyorAccess {
                 final int index = AbstractConveyor.getInsertIndex(out1Entries, entry, COMPARATOR);
                 out1Entries.add(index, entry);
                 updatePosition(Branch.RIGHT, entry, false);
+            } else {
+                final float minPos = computeMinPos(Branch.STRAIGHT);
+                if (minPos - startLength > ConveyorTray.TRAY_SIZE / 2.0F) {
+                    return false;
+                }
+                final float maxPos = Math.min(computeMaxPos(Branch.STRAIGHT), getLastPos(Branch.STRAIGHT));
+                if (!MathUtil.greaterThan(maxPos, minPos)) {
+                    return false;
+                }
+                entry.tickRemaining = 1 - tickUsed;
+                final int index = AbstractConveyor.getInsertIndex(out2Entries, entry, COMPARATOR);
+                out2Entries.add(index, entry);
+                updatePosition(Branch.STRAIGHT, entry, false);
             }
             decider.onAccept(entry.tray);
             return true;
@@ -419,11 +467,16 @@ public class TwoSplitterConveyor implements ConveyorAccess {
                 return false;
             }
             return cache.output0.tryInsert(entry.getTray(), tickUsed);
-        } else {
+        } else if (branch == Branch.RIGHT) {
             if (cache.output1 == null) {
                 return false;
             }
             return cache.output1.tryInsert(entry.getTray(), tickUsed);
+        } else {
+            if (cache.output2 == null) {
+                return false;
+            }
+            return cache.output2.tryInsert(entry.getTray(), tickUsed);
         }
     }
 
@@ -432,14 +485,16 @@ public class TwoSplitterConveyor implements ConveyorAccess {
             entry.getTray().setPosition(start.add(startDelta.multiply(entry.pos / startLength)), override);
         } else if (branch == Branch.LEFT) {
             entry.getTray().setPosition(center.add(end0Delta.multiply((entry.pos - startLength) / end0Length)), override);
-        } else {
+        } else if (branch == Branch.RIGHT) {
             entry.getTray().setPosition(center.add(end1Delta.multiply((entry.pos - startLength) / end1Length)), override);
+        } else {
+            entry.getTray().setPosition(center.add(end2Delta.multiply((entry.pos - startLength) / end2Length)), override);
         }
     }
 
     @Override
     public Iterator<ConveyorTray> getTrays() {
-        return Stream.concat(inEntries.stream(), Stream.concat(out0Entries.stream(), out1Entries.stream())).map(AbstractConveyor.Entry::getTray).iterator();
+        return Stream.concat(Stream.concat(inEntries.stream(), out2Entries.stream()), Stream.concat(out0Entries.stream(), out1Entries.stream())).map(AbstractConveyor.Entry::getTray).iterator();
     }
 
     public boolean isSyncNeeded() {
@@ -487,6 +542,16 @@ public class TwoSplitterConveyor implements ConveyorAccess {
             out1Entries.add(e);
             updatePosition(Branch.RIGHT, e, true);
         }
+        out2Entries.clear();
+        count = buf.readVarInt();
+        for (int i = 0; i < count; i++) {
+            final ConveyorTray tray = ConveyorTray.readFromNbt(buf.readNbt(), true);
+            final float pos = buf.readFloat();
+            final float tickRemaining = fromByte(buf.readByte());
+            final AbstractConveyor.Entry e = new AbstractConveyor.Entry(tray, pos, tickRemaining);
+            out2Entries.add(e);
+            updatePosition(Branch.STRAIGHT, e, true);
+        }
     }
 
     public void writeSyncToBuf(final PacketByteBuf buf) {
@@ -508,6 +573,12 @@ public class TwoSplitterConveyor implements ConveyorAccess {
             buf.writeFloat(entry.getPos());
             buf.writeByte(AbstractSyncingConveyor.toByte(entry.getTickRemaining()));
         }
+        buf.writeVarInt(out2Entries.size());
+        for (final AbstractConveyor.Entry entry : out2Entries) {
+            buf.writeNbt(entry.getTray().writeToNbt(true));
+            buf.writeFloat(entry.getPos());
+            buf.writeByte(AbstractSyncingConveyor.toByte(entry.getTickRemaining()));
+        }
     }
 
     public void clearSyncFlag() {
@@ -521,7 +592,8 @@ public class TwoSplitterConveyor implements ConveyorAccess {
     private enum Branch {
         NONE,
         LEFT,
-        RIGHT
+        RIGHT,
+        STRAIGHT
     }
 
     private static final class Cache {
@@ -530,6 +602,8 @@ public class TwoSplitterConveyor implements ConveyorAccess {
         private Conveyor output0;
         private ConveyorLike out1;
         private Conveyor output1;
+        private ConveyorLike out2;
+        private Conveyor output2;
     }
 
     public interface Decider {
@@ -540,6 +614,7 @@ public class TwoSplitterConveyor implements ConveyorAccess {
 
     public enum Dir {
         LEFT,
-        RIGHT
+        RIGHT,
+        STRAIGHT
     }
 }

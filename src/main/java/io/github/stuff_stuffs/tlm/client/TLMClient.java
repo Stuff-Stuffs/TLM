@@ -10,6 +10,7 @@ import io.github.stuff_stuffs.tlm.client.render.block.model.UnbakedLabelerBlockM
 import io.github.stuff_stuffs.tlm.client.render.block.model.UnbakedTwoSplitterConveyorBlockModel;
 import io.github.stuff_stuffs.tlm.client.render.conveyor.ConveyorTrayRenderer;
 import io.github.stuff_stuffs.tlm.client.screen.LabelerBlockHandledScreen;
+import io.github.stuff_stuffs.tlm.client.screen.TwoSplitterBlockHandledScreen;
 import io.github.stuff_stuffs.tlm.common.TLM;
 import io.github.stuff_stuffs.tlm.common.api.item.TLMItem;
 import io.github.stuff_stuffs.tlm.common.api.resource.ConveyedResource;
@@ -59,6 +60,7 @@ public class TLMClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         HandledScreens.register(TLMScreenHandlerTypes.LABELER_BLOCK_CONFIGURATION_SCREEN_HANDLER_TYPE, LabelerBlockHandledScreen::new);
+        HandledScreens.register(TLMScreenHandlerTypes.TWO_SPLITTER_BLOCK_SCREEN_HANDLER_TYPE, TwoSplitterBlockHandledScreen::new);
         ClientBlockEntityEvents.BLOCK_ENTITY_LOAD.register((blockEntity, world) -> ((ClientWorldCache) world).tlm_invalidateCache(blockEntity.getPos()));
         ClientBlockEntityEvents.BLOCK_ENTITY_UNLOAD.register((blockEntity, world) -> ((ClientWorldCache) world).tlm_invalidateCache(blockEntity.getPos()));
         BlockEntityRendererRegistry.register(TLMBlockEntities.CONVEYOR_BLOCK_ENTITY_TYPE, ConveyorSupplierBlockEntityRenderer::new);
