@@ -6,7 +6,7 @@ import net.minecraft.client.render.*;
 import net.minecraft.client.texture.Sprite;
 import net.minecraft.client.texture.SpriteAtlasTexture;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.text.LiteralText;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.Matrix4f;
 
 import java.util.function.IntSupplier;
@@ -17,7 +17,7 @@ public class IconButtonWidget extends ButtonWidget {
     private final IntSupplier tintGetter;
 
     public IconButtonWidget(final int x, final int y, final int width, final int height, final PressAction onPress, final TooltipSupplier tooltipSupplier, final Supplier<Sprite> spriteGetter, final IntSupplier tintGetter) {
-        super(x, y, width, height, new LiteralText(""), onPress, tooltipSupplier);
+        super(x, y, width, height, Text.of(""), onPress, tooltipSupplier);
         this.spriteGetter = spriteGetter;
         this.tintGetter = tintGetter;
     }
@@ -41,7 +41,6 @@ public class IconButtonWidget extends ButtonWidget {
         bufferBuilder.vertex(matrix, x1, y1, 1).color(colour).texture(u1, v1).next();
         bufferBuilder.vertex(matrix, x1, y0, 1).color(colour).texture(u1, v0).next();
         bufferBuilder.vertex(matrix, x0, y0, 1).color(colour).texture(u0, v0).next();
-        bufferBuilder.end();
-        BufferRenderer.draw(bufferBuilder);
+        Tessellator.getInstance().draw();
     }
 }

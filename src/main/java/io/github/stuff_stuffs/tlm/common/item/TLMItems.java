@@ -13,6 +13,7 @@ public final class TLMItems {
     public static final BlockItem STORAGE_CRATE_LOADER = new TLMBlockItem(TLMBlocks.STORAGE_CRATE_LOADER_BLOCK, new FabricItemSettings(), false, false);
     public static final BlockItem LABELER_ITEM = new TLMBlockItem(TLMBlocks.LABELER_BLOCK, new FabricItemSettings(), false, true);
     public static final BlockItem TWO_SPLITTER_CONVEYOR_ITEM = new TLMBlockItem(TLMBlocks.TWO_SPLITTER_CONVEYOR_BLOCK, new FabricItemSettings(), false, true);
+    public static final BlockItem THREE_SPLITTER_CONVEYOR_ITEM = new TLMBlockItem(TLMBlocks.THREE_SPLITTER_CONVEYOR_BLOCK, new FabricItemSettings(), false, true);
 
     public static void init() {
         Registry.register(Registry.ITEM, TLM.createId("conveyor"), CONVEYOR_BLOCK_ITEM);
@@ -21,6 +22,7 @@ public final class TLMItems {
         Registry.register(Registry.ITEM, TLM.createId("storage_crate_loader"), STORAGE_CRATE_LOADER);
         Registry.register(Registry.ITEM, TLM.createId("labeler"), LABELER_ITEM);
         Registry.register(Registry.ITEM, TLM.createId("two_way_splitter_conveyor"), TWO_SPLITTER_CONVEYOR_ITEM);
+        Registry.register(Registry.ITEM, TLM.createId("three_way_splitter_conveyor"), THREE_SPLITTER_CONVEYOR_ITEM);
     }
 
     private TLMItems() {

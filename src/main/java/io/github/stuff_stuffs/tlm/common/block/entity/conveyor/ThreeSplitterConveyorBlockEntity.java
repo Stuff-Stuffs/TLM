@@ -2,13 +2,13 @@ package io.github.stuff_stuffs.tlm.common.block.entity.conveyor;
 
 import io.github.stuff_stuffs.tlm.common.api.UpdatingBlockEntity;
 import io.github.stuff_stuffs.tlm.common.api.conveyor.*;
-import io.github.stuff_stuffs.tlm.common.api.conveyor.impls.TwoSplitterConveyor;
+import io.github.stuff_stuffs.tlm.common.api.conveyor.impls.ThreeSplitterConveyor;
 import io.github.stuff_stuffs.tlm.common.api.resource.ConveyorTray;
 import io.github.stuff_stuffs.tlm.common.api.resource.ConveyorTrayDataStack;
 import io.github.stuff_stuffs.tlm.common.block.TLMBlockProperties;
 import io.github.stuff_stuffs.tlm.common.block.entity.TLMBlockEntities;
 import io.github.stuff_stuffs.tlm.common.network.UpdatingBlockEntitySender;
-import io.github.stuff_stuffs.tlm.common.screen.TwoSplitterBlockScreenHandler;
+import io.github.stuff_stuffs.tlm.common.screen.ThreeSplitterBlockScreenHandler;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.minecraft.block.BlockState;
@@ -32,18 +32,18 @@ import java.util.EnumMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
-public class TwoSplitterConveyorBlockEntity extends BlockEntity implements UpdatingBlockEntity, ConveyorSupplier, NamedScreenHandlerFactory {
+public class ThreeSplitterConveyorBlockEntity extends BlockEntity implements UpdatingBlockEntity, ConveyorSupplier, NamedScreenHandlerFactory {
     private final Map<ConveyorTrayDataStack.State, Choice> dirMap;
     private Choice emptyChoice;
     private int stackIndex = 0;
     private long lastUpdate = -1;
     private final AbstractRandom random;
     private final Map<ConveyorTrayDataStack.State, Boolean> popMap;
-    private TwoSplitterConveyor conveyor;
+    private ThreeSplitterConveyor conveyor;
     private boolean initialized = false;
 
-    public TwoSplitterConveyorBlockEntity(final BlockPos pos, final BlockState state) {
-        super(TLMBlockEntities.TWO_SPLITTER_CONVEYOR_BLOCK_ENTITY_TYPE, pos, state);
+    public ThreeSplitterConveyorBlockEntity(final BlockPos pos, final BlockState state) {
+        super(TLMBlockEntities.THREE_SPLITTER_CONVEYOR_BLOCK_ENTITY_TYPE, pos, state);
         createConveyor();
         random = new SimpleRandom(0);
         dirMap = new EnumMap<>(ConveyorTrayDataStack.State.class);
@@ -87,9 +87,9 @@ public class TwoSplitterConveyorBlockEntity extends BlockEntity implements Updat
     }
 
     private void createConveyor() {
-        conveyor = new TwoSplitterConveyor(ConveyorBlockEntity.BASE_CONVEYOR_SPEED, getCachedState().get(TLMBlockProperties.CONVEYOR_STRAIGHT_FLAT_ORIENTATION_PROPERTY).getInputSide(), pos, new TwoSplitterConveyor.Decider() {
+        conveyor = new ThreeSplitterConveyor(ConveyorBlockEntity.BASE_CONVEYOR_SPEED, getCachedState().get(TLMBlockProperties.CONVEYOR_STRAIGHT_FLAT_ORIENTATION_PROPERTY).getInputSide(), pos, new ThreeSplitterConveyor.Decider() {
             @Override
-            public TwoSplitterConveyor.Dir decide(final ConveyorTray tray) {
+            public ThreeSplitterConveyor.Dir decide(final ConveyorTray tray) {
                 final ConveyorTrayDataStack stack = tray.getStack(stackIndex);
                 if (stack.isEmpty()) {
                     return compute(emptyChoice);
@@ -108,13 +108,19 @@ public class TwoSplitterConveyorBlockEntity extends BlockEntity implements Updat
                 }
             }
 
-            private TwoSplitterConveyor.Dir compute(final Choice choice) {
+            private ThreeSplitterConveyor.Dir compute(final Choice choice) {
                 return switch (choice) {
-                    case LEFT -> TwoSplitterConveyor.Dir.LEFT;
-                    case RIGHT -> TwoSplitterConveyor.Dir.RIGHT;
+                    case LEFT -> ThreeSplitterConveyor.Dir.LEFT;
+                    case RIGHT -> ThreeSplitterConveyor.Dir.RIGHT;
+                    case STRAIGHT -> ThreeSplitterConveyor.Dir.STRAIGHT;
                     case RANDOM -> {
                         updateRandom();
-                        yield random.nextBoolean() ? TwoSplitterConveyor.Dir.LEFT : TwoSplitterConveyor.Dir.RIGHT;
+                        final int i = random.nextInt(3);
+                        yield switch (i) {
+                            case 0 -> ThreeSplitterConveyor.Dir.LEFT;
+                            case 1 -> ThreeSplitterConveyor.Dir.STRAIGHT;
+                            default -> ThreeSplitterConveyor.Dir.RIGHT;
+                        };
                     }
                 };
             }
@@ -159,27 +165,31 @@ public class TwoSplitterConveyorBlockEntity extends BlockEntity implements Updat
 
     @Override
     public Text getDisplayName() {
-        return Text.of("Two Way Splitter");
+        return Text.of("Three Way Splitter");
     }
 
     @Nullable
     @Override
     public ScreenHandler createMenu(final int syncId, final PlayerInventory inv, final PlayerEntity player) {
-        return new TwoSplitterBlockScreenHandler(this, syncId);
+        return new ThreeSplitterBlockScreenHandler(this, syncId);
     }
 
-    public static void tick(final World world, final BlockPos pos, final BlockState state, final TwoSplitterConveyorBlockEntity conveyor) {
+    public static void tick(final World world, final BlockPos pos, final BlockState state, final ThreeSplitterConveyorBlockEntity conveyor) {
         if (!conveyor.initialized) {
             final ConveyorOrientation orientation = state.get(TLMBlockProperties.CONVEYOR_STRAIGHT_FLAT_ORIENTATION_PROPERTY);
             final BlockPos inputPos = orientation.getInputPos(pos);
             final Supplier<@Nullable ConveyorLike> inputConveyorLikeCache = ConveyorOrientation.createInputFinder(ConveyorApi.CONVEYOR_LIKE_BLOCK_API_LOOKUP, orientation.getInputSide().getOpposite(), inputPos, world);
-            final Direction leftDirection = orientation.getOutputDirection().getOpposite().rotateYClockwise();
-            final Direction rightDirection = orientation.getOutputDirection().getOpposite().rotateYCounterclockwise();
+            final Direction outputDirection = orientation.getOutputDirection();
+            final Direction outputSide = outputDirection.getOpposite();
+            final Direction leftDirection = outputSide.rotateYClockwise();
+            final Direction rightDirection = outputSide.rotateYCounterclockwise();
             final Supplier<@Nullable ConveyorLike> output0ConveyorLikeCache = ConveyorOrientation.createOutputFinder(ConveyorApi.CONVEYOR_LIKE_BLOCK_API_LOOKUP, leftDirection, pos.offset(rightDirection), world);
             final Supplier<@Nullable Conveyor> output0ConveyorCache = ConveyorOrientation.createOutputFinder(ConveyorApi.CONVEYOR_BLOCK_API_LOOKUP, leftDirection, pos.offset(rightDirection), world);
             final Supplier<@Nullable ConveyorLike> output1ConveyorLikeCache = ConveyorOrientation.createOutputFinder(ConveyorApi.CONVEYOR_LIKE_BLOCK_API_LOOKUP, rightDirection, pos.offset(leftDirection), world);
             final Supplier<@Nullable Conveyor> output1ConveyorCache = ConveyorOrientation.createOutputFinder(ConveyorApi.CONVEYOR_BLOCK_API_LOOKUP, rightDirection, pos.offset(leftDirection), world);
-            conveyor.conveyor.setup(inputConveyorLikeCache, output0ConveyorLikeCache, output0ConveyorCache, output1ConveyorLikeCache, output1ConveyorCache);
+            final Supplier<@Nullable ConveyorLike> output2ConveyorLikeCache = ConveyorOrientation.createOutputFinder(ConveyorApi.CONVEYOR_LIKE_BLOCK_API_LOOKUP, outputSide, pos.offset(outputDirection), world);
+            final Supplier<@Nullable Conveyor> output2ConveyorCache = ConveyorOrientation.createOutputFinder(ConveyorApi.CONVEYOR_BLOCK_API_LOOKUP, outputSide, pos.offset(outputDirection), world);
+            conveyor.conveyor.setup(inputConveyorLikeCache, output0ConveyorLikeCache, output0ConveyorCache, output1ConveyorLikeCache, output1ConveyorCache, output2ConveyorLikeCache, output2ConveyorCache);
             conveyor.initialized = true;
         }
         conveyor.conveyor.tick();
@@ -199,6 +209,7 @@ public class TwoSplitterConveyorBlockEntity extends BlockEntity implements Updat
     public enum Choice {
         LEFT,
         RIGHT,
+        STRAIGHT,
         RANDOM
     }
 }

@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "tlm:block/three_way_splitter_conveyor"
+    }
+  }
+}

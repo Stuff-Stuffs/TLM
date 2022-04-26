@@ -7,6 +7,7 @@ import io.github.stuff_stuffs.tlm.client.render.DirectionalPlacingRenderer;
 import io.github.stuff_stuffs.tlm.client.render.block.entity.ConveyorSupplierBlockEntityRenderer;
 import io.github.stuff_stuffs.tlm.client.render.block.model.UnbakedConveyorBlockModel;
 import io.github.stuff_stuffs.tlm.client.render.block.model.UnbakedLabelerBlockModel;
+import io.github.stuff_stuffs.tlm.client.render.block.model.UnbakedThreeSplitterConveyorBlockModel;
 import io.github.stuff_stuffs.tlm.client.render.block.model.UnbakedTwoSplitterConveyorBlockModel;
 import io.github.stuff_stuffs.tlm.client.render.conveyor.ConveyorTrayRenderer;
 import io.github.stuff_stuffs.tlm.client.screen.LabelerBlockHandledScreen;
@@ -66,6 +67,7 @@ public class TLMClient implements ClientModInitializer {
         BlockEntityRendererRegistry.register(TLMBlockEntities.CONVEYOR_BLOCK_ENTITY_TYPE, ConveyorSupplierBlockEntityRenderer::new);
         BlockEntityRendererRegistry.register(TLMBlockEntities.LABELER_BLOCK_ENTITY_BLOCK_TYPE, ConveyorSupplierBlockEntityRenderer::new);
         BlockEntityRendererRegistry.register(TLMBlockEntities.TWO_SPLITTER_CONVEYOR_BLOCK_ENTITY_TYPE, ConveyorSupplierBlockEntityRenderer::new);
+        BlockEntityRendererRegistry.register(TLMBlockEntities.THREE_SPLITTER_CONVEYOR_BLOCK_ENTITY_TYPE, ConveyorSupplierBlockEntityRenderer::new);
         WorldRenderEvents.BLOCK_OUTLINE.register((context, hitResult) -> {
             if (MinecraftClient.getInstance().player.getStackInHand(Hand.MAIN_HAND).getItem() instanceof TLMItem item && item.hasDirectionalPlacing()) {
                 return !DirectionalPlacingRenderer.render(context, hitResult);
@@ -91,6 +93,9 @@ public class TLMClient implements ClientModInitializer {
                 }
                 if ("block/two_way_splitter_conveyor".equals(path)) {
                     return new UnbakedTwoSplitterConveyorBlockModel();
+                }
+                if("block/three_way_splitter_conveyor".equals(path)) {
+                    return new UnbakedThreeSplitterConveyorBlockModel();
                 }
             }
             return null;

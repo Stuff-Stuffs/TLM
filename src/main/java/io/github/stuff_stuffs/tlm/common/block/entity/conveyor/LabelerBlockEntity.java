@@ -26,7 +26,6 @@ import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
 import net.minecraft.screen.NamedScreenHandlerFactory;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
@@ -93,7 +92,7 @@ public class LabelerBlockEntity extends ConveyorBlockEntity implements NamedScre
 
     @Override
     public Text getDisplayName() {
-        return new LiteralText("Labeler");
+        return Text.of("Labeler");
     }
 
     @Nullable

@@ -385,7 +385,7 @@ public class TwoSplitterConveyor implements ConveyorAccess {
     private boolean tryAdvance(final Branch branch, final AbstractConveyor.Entry entry, final float tickUsed) {
         if (branch == Branch.NONE) {
             final Dir dir = decider.decide(entry.tray);
-            if (dir == Dir.LEFT) {
+            if (dir == Dir.RIGHT) {
                 final float minPos = computeMinPos(Branch.LEFT);
                 if (minPos-startLength > ConveyorTray.TRAY_SIZE / 2.0F) {
                     return false;

@@ -68,17 +68,19 @@ public class ThreeSplitterConveyor implements ConveyorAccess {
         end0Length = 0.5F;
         end1Delta = center.withBias(out1Side, -0.5).subtract(center);
         end1Length = 0.5F;
-        end2Delta = center.withBias(inSide, -0.5);
+        end2Delta = center.withBias(inSide, -0.5).subtract(center);
         end2Length = 0.5F;
         conveyorCache = new EnumMap<>(Direction.class);
     }
 
-    public void setup(final Supplier<ConveyorLike> inputConveyorLikeCache, final Supplier<ConveyorLike> output0ConveyorLikeCache, final Supplier<Conveyor> output0ConveyorCache, final Supplier<ConveyorLike> output1ConveyorLikeCache, final Supplier<Conveyor> output1ConveyorCache) {
+    public void setup(final Supplier<ConveyorLike> inputConveyorLikeCache, final Supplier<ConveyorLike> output0ConveyorLikeCache, final Supplier<Conveyor> output0ConveyorCache, final Supplier<ConveyorLike> output1ConveyorLikeCache, final Supplier<Conveyor> output1ConveyorCache, final Supplier<ConveyorLike> output2ConveyorLikeCache, final Supplier<Conveyor> output2ConveyorCache) {
         this.inputConveyorLikeCache = inputConveyorLikeCache;
         this.output0ConveyorLikeCache = output0ConveyorLikeCache;
         this.output0ConveyorCache = output0ConveyorCache;
         this.output1ConveyorLikeCache = output1ConveyorLikeCache;
         this.output1ConveyorCache = output1ConveyorCache;
+        this.output2ConveyorLikeCache = output2ConveyorLikeCache;
+        this.output2ConveyorCache = output2ConveyorCache;
     }
 
     public void setDecider(final Decider decider) {
@@ -245,11 +247,11 @@ public class ThreeSplitterConveyor implements ConveyorAccess {
     }
 
     private float computeMaxOverlap(final Direction side) {
-        if (inEntries.isEmpty() && out0Entries.isEmpty() && out1Entries.isEmpty()) {
+        if (inEntries.isEmpty() && out0Entries.isEmpty() && out1Entries.isEmpty() && out2Entries.isEmpty()) {
             return ConveyorTray.TRAY_SIZE / 2.0F;
         }
         final Direction.Axis axis = side.getAxis();
-        final Iterator<AbstractConveyor.Entry> trays = Stream.concat(Stream.concat(inEntries.stream(), out0Entries.stream()), out1Entries.stream()).iterator();
+        final Iterator<AbstractConveyor.Entry> trays = Stream.concat(Stream.concat(inEntries.stream(), out2Entries.stream()), Stream.concat(out0Entries.stream(), out1Entries.stream())).iterator();
         float p;
         if (side.getDirection() == Direction.AxisDirection.POSITIVE) {
             p = Float.NEGATIVE_INFINITY;
@@ -272,15 +274,19 @@ public class ThreeSplitterConveyor implements ConveyorAccess {
                 }
             }
         }
-        return (float) Math.max(Math.abs(p - (0.5 - ConveyorTray.TRAY_SIZE / 2.0F) - axis.choose(center.x, center.y, center.z)), 0);
+        double p2 = p - axis.choose(center.x, center.y, center.z);
+        if (p2 > 0) {
+            p2 = -p2;
+        }
+        return (float) Math.max(Math.abs(p2 - (0.5 - ConveyorTray.TRAY_SIZE / 2.0F)), 0);
     }
 
     private float computeOverlap(final Direction side) {
-        if (inEntries.isEmpty() && out0Entries.isEmpty() && out1Entries.isEmpty()) {
+        if (inEntries.isEmpty() && out0Entries.isEmpty() && out1Entries.isEmpty() && out2Entries.isEmpty()) {
             return 0;
         }
         final Direction.Axis axis = side.getAxis();
-        final Iterator<AbstractConveyor.Entry> trays = Stream.concat(Stream.concat(inEntries.stream(), out0Entries.stream()), out1Entries.stream()).iterator();
+        final Iterator<AbstractConveyor.Entry> trays = Stream.concat(Stream.concat(inEntries.stream(), out2Entries.stream()), Stream.concat(out0Entries.stream(), out1Entries.stream())).iterator();
         float p;
         if (side.getDirection() == Direction.AxisDirection.POSITIVE) {
             p = Float.NEGATIVE_INFINITY;
@@ -303,7 +309,11 @@ public class ThreeSplitterConveyor implements ConveyorAccess {
                 }
             }
         }
-        return (float) Math.max(Math.abs(p - axis.choose(center.x, center.y, center.z)) - 0.5, 0);
+        double p2 = p - axis.choose(center.x, center.y, center.z);
+        if (p2 < 0) {
+            p2 = -p2;
+        }
+        return (float) Math.max(-p2 +ConveyorTray.TRAY_SIZE, 0);
     }
 
     private float computeMinY(final @Nullable Direction side, final float overlap) {
@@ -394,6 +404,19 @@ public class ThreeSplitterConveyor implements ConveyorAccess {
             if (i > 0) {
                 nextPos = Math.min(nextPos, entries.get(i - 1).pos - ConveyorTray.TRAY_SIZE);
             }
+            if (branch == Branch.NONE) {
+                float max = Float.POSITIVE_INFINITY;
+                if (!out0Entries.isEmpty()) {
+                    max = Math.min(max, out0Entries.get(out0Entries.size() - 1).pos - ConveyorTray.TRAY_SIZE);
+                }
+                if (!out1Entries.isEmpty()) {
+                    max = Math.min(max, out1Entries.get(out1Entries.size() - 1).pos - ConveyorTray.TRAY_SIZE);
+                }
+                if (!out2Entries.isEmpty()) {
+                    max = Math.min(max, out2Entries.get(out2Entries.size() - 1).pos - ConveyorTray.TRAY_SIZE);
+                }
+                nextPos = Math.min(nextPos, max);
+            }
             boolean skip = false;
             if (MathUtil.greaterThan(nextPos, maxPos)) {
                 final float tickUsed = (nextPos - maxPos) / movement;
@@ -420,7 +443,7 @@ public class ThreeSplitterConveyor implements ConveyorAccess {
     private boolean tryAdvance(final Branch branch, final AbstractConveyor.Entry entry, final float tickUsed) {
         if (branch == Branch.NONE) {
             final Dir dir = decider.decide(entry.tray);
-            if (dir == Dir.LEFT) {
+            if (dir == Dir.RIGHT) {
                 final float minPos = computeMinPos(Branch.LEFT);
                 if (minPos - startLength > ConveyorTray.TRAY_SIZE / 2.0F) {
                     return false;
@@ -433,7 +456,7 @@ public class ThreeSplitterConveyor implements ConveyorAccess {
                 final int index = AbstractConveyor.getInsertIndex(out0Entries, entry, COMPARATOR);
                 out0Entries.add(index, entry);
                 updatePosition(Branch.LEFT, entry, false);
-            } else if (dir == Dir.RIGHT) {
+            } else if (dir == Dir.LEFT) {
                 final float minPos = computeMinPos(Branch.RIGHT);
                 if (minPos - startLength > ConveyorTray.TRAY_SIZE / 2.0F) {
                     return false;
