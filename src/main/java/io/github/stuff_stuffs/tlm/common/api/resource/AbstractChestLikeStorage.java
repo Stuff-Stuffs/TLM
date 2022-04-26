@@ -76,6 +76,7 @@ public abstract class AbstractChestLikeStorage<T extends TransferVariant<?>> ext
         final long inserted = insertInner(resource, maxAmount);
         if (inserted != 0) {
             save(new ResourceAmount<>(resource, inserted), transaction);
+            syncNeeded = true;
         }
         return inserted;
     }
@@ -130,6 +131,7 @@ public abstract class AbstractChestLikeStorage<T extends TransferVariant<?>> ext
         final long extracted = extractInner(resource, maxAmount);
         if (extracted != 0) {
             save(new ResourceAmount<>(resource, -extracted), transaction);
+            syncNeeded = true;
         }
         return extracted;
     }
