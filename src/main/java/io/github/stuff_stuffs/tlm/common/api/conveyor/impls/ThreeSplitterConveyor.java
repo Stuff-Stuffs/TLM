@@ -252,7 +252,7 @@ public class ThreeSplitterConveyor implements ConveyorAccess {
             return ConveyorTray.TRAY_SIZE / 2.0F;
         }
         final Iterator<AbstractConveyor.Entry> trays = Stream.concat(Stream.concat(inEntries.stream(), out2Entries.stream()), Stream.concat(out0Entries.stream(), out1Entries.stream())).iterator();
-        final Box box = Box.of(center.withBias(side, 1), 1, 1, 1);
+        final Box box = Box.of(center.withBias(side, 10), 1, 1, 1);
         final Vec3d vel = new Vec3d(-side.getOffsetX(), -side.getOffsetY(), -side.getOffsetZ());
         float max = Float.POSITIVE_INFINITY;
         while (trays.hasNext()) {
@@ -263,11 +263,29 @@ public class ThreeSplitterConveyor implements ConveyorAccess {
                 max = Math.min(max, s);
             }
         }
-        return Math.min(max, ConveyorTray.TRAY_SIZE / 2.0F);
+        return Math.min(max/10.0F, ConveyorTray.TRAY_SIZE / 2.0F);
     }
 
     private float computeOverlap(final Direction side) {
-        return 0;
+        if (inEntries.isEmpty() && out0Entries.isEmpty() && out1Entries.isEmpty() && out2Entries.isEmpty()) {
+            return ConveyorTray.TRAY_SIZE / 2.0F;
+        }
+        final Iterator<AbstractConveyor.Entry> trays = Stream.concat(Stream.concat(inEntries.stream(), out2Entries.stream()), Stream.concat(out0Entries.stream(), out1Entries.stream())).iterator();
+        final Box box = Box.of(center.withBias(side, 2), 1, 1, 1);
+        final Vec3d vel = new Vec3d(-side.getOffsetX(), -side.getOffsetY(), -side.getOffsetZ());
+        float max = Float.POSITIVE_INFINITY;
+        while (trays.hasNext()) {
+            final AbstractConveyor.Entry next = trays.next();
+            final Box bounds = next.tray.getBounds(1);
+            final float s = CollisionUtil.sweep(box, bounds, vel);
+            if (!Float.isNaN(s)) {
+                max = Math.min(max, s);
+            }
+        }
+        if(max==Float.POSITIVE_INFINITY) {
+            return 0;
+        }
+        return Math.max(1 - max/2.0F, 0);
     }
 
     private float computeMinY(final @Nullable Direction side, final float overlap) {

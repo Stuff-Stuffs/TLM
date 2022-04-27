@@ -232,33 +232,24 @@ public class TwoSplitterConveyor implements ConveyorAccess {
 
     private float computeOverlap(final Direction side) {
         if (inEntries.isEmpty() && out0Entries.isEmpty() && out1Entries.isEmpty()) {
+            return ConveyorTray.TRAY_SIZE / 2.0F;
+        }
+        final Iterator<AbstractConveyor.Entry> trays = Stream.concat(inEntries.stream(), Stream.concat(out0Entries.stream(), out1Entries.stream())).iterator();
+        final Box box = Box.of(center.withBias(side, 2), 1, 1, 1);
+        final Vec3d vel = new Vec3d(-side.getOffsetX(), -side.getOffsetY(), -side.getOffsetZ());
+        float max = Float.POSITIVE_INFINITY;
+        while (trays.hasNext()) {
+            final AbstractConveyor.Entry next = trays.next();
+            final Box bounds = next.tray.getBounds(1);
+            final float s = CollisionUtil.sweep(box, bounds, vel);
+            if (!Float.isNaN(s)) {
+                max = Math.min(max, s);
+            }
+        }
+        if(max==Float.POSITIVE_INFINITY) {
             return 0;
         }
-        final Direction.Axis axis = side.getAxis();
-        final Iterator<AbstractConveyor.Entry> trays = Stream.concat(Stream.concat(inEntries.stream(), out0Entries.stream()), out1Entries.stream()).iterator();
-        float p;
-        if (side.getDirection() == Direction.AxisDirection.POSITIVE) {
-            p = Float.NEGATIVE_INFINITY;
-            while (trays.hasNext()) {
-                final AbstractConveyor.Entry next = trays.next();
-                final Box bounds = next.tray.getBounds(1);
-                if (bounds.offset(center.multiply(-1)).contains(0, 0, 0)) {
-                    final Vec3d center = bounds.getCenter();
-                    p = Math.max(p, (float) axis.choose(center.x, center.y, center.z));
-                }
-            }
-        } else {
-            p = Float.POSITIVE_INFINITY;
-            while (trays.hasNext()) {
-                final AbstractConveyor.Entry next = trays.next();
-                final Box bounds = next.tray.getBounds(1);
-                if (bounds.offset(center.multiply(-1)).contains(0, 0, 0)) {
-                    final Vec3d center = bounds.getCenter();
-                    p = Math.min(p, (float) axis.choose(center.x, center.y, center.z));
-                }
-            }
-        }
-        return (float) Math.max(Math.abs(p - axis.choose(center.x, center.y, center.z)) - 0.5, 0);
+        return Math.max(1-max, 0);
     }
 
     private float computeMinY(final @Nullable Direction side, final float overlap) {
