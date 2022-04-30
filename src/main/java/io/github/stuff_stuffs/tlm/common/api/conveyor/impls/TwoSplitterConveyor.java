@@ -39,6 +39,7 @@ public class TwoSplitterConveyor implements ConveyorAccess {
     private final Vec3d end1Delta;
     private final float end1Length;
     private final Cache cache = new Cache();
+    private long lastTicked = Long.MIN_VALUE;
     private Decider decider;
     private boolean syncNeeded = false;
     private Supplier<ConveyorLike> inputConveyorLikeCache;
@@ -81,7 +82,7 @@ public class TwoSplitterConveyor implements ConveyorAccess {
         return conveyorCache.computeIfAbsent(side, this::computeConveyor);
     }
 
-    private boolean tryInsert(final Direction side, final ConveyorTray tray, final float tickUsed) {
+    private boolean tryInsert(final Direction side, final ConveyorTray tray, final float tickUsed, final long tickOrder) {
         if (side != inSide && side != null) {
             return false;
         }
@@ -97,9 +98,16 @@ public class TwoSplitterConveyor implements ConveyorAccess {
                 return false;
             }
             final AbstractConveyor.Entry entry = new AbstractConveyor.Entry(tray, minPos, 1 - tickUsed);
-            final int index = AbstractConveyor.getInsertIndex(inEntries, entry, COMPARATOR);
-            inEntries.add(index, entry);
-            updatePosition(Branch.NONE, entry, false);
+            if (tickOrder < lastTicked && tickUsed < 1) {
+                if (moveIteration(maxPos, inEntries, entry, Branch.NONE, inEntries.size() - 1, lastTicked)) {
+                    final int index = AbstractConveyor.getInsertIndex(inEntries, entry, COMPARATOR);
+                    inEntries.add(index, entry);
+                }
+            } else {
+                final int index = AbstractConveyor.getInsertIndex(inEntries, entry, COMPARATOR);
+                inEntries.add(index, entry);
+                updatePosition(Branch.NONE, entry, true);
+            }
         } else {
             final float maxPos = Math.min(computeMaxPos(Branch.NONE), getLastPos(Branch.NONE));
             if (!MathUtil.greaterThan(maxPos, minPos) && !MathUtil.equalTo(maxPos, minPos)) {
@@ -112,6 +120,46 @@ public class TwoSplitterConveyor implements ConveyorAccess {
         }
         syncNeeded = true;
         return true;
+    }
+
+    private boolean moveIteration(final float maxPos, final List<AbstractConveyor.Entry> entries, final AbstractConveyor.Entry entry, final Branch branch, final int next, final long tickOrder) {
+        if (entry.tickRemaining <= 0) {
+            updatePosition(branch, entry, false);
+            return true;
+        }
+        final float movement = entry.tickRemaining * speed;
+        float nextPos = movement + entry.pos;
+        if (next >= 0) {
+            nextPos = Math.min(nextPos, entries.get(next).pos - ConveyorTray.TRAY_SIZE);
+        }
+        if (branch == Branch.NONE) {
+            float max = Float.POSITIVE_INFINITY;
+            if (!out0Entries.isEmpty()) {
+                max = Math.min(max, out0Entries.get(out0Entries.size() - 1).pos - ConveyorTray.TRAY_SIZE);
+            }
+            if (!out1Entries.isEmpty()) {
+                max = Math.min(max, out1Entries.get(out1Entries.size() - 1).pos - ConveyorTray.TRAY_SIZE);
+            }
+            nextPos = Math.min(nextPos, max);
+        }
+        boolean skip = false;
+        if (MathUtil.greaterThan(nextPos, maxPos)) {
+            final float tickUsed = (nextPos - maxPos) / movement;
+            if (tryAdvance(branch, entry, tickUsed, tickOrder)) {
+                syncNeeded = true;
+                skip = true;
+            } else {
+                nextPos = maxPos;
+            }
+        }
+        if (skip) {
+            return false;
+        } else {
+            entry.pos = nextPos;
+            updatePosition(branch, entry, false);
+            entry.tickRemaining = -1;
+            return true;
+        }
     }
 
     private void updateCache() {
@@ -156,7 +204,6 @@ public class TwoSplitterConveyor implements ConveyorAccess {
             }
             final AbstractConveyor.Entry entry = inEntries.get(0);
             if (entry.pos + ConveyorTray.TRAY_SIZE > startLength) {
-                //TODO maybe TRAY_SIZE?
                 return startLength + ConveyorTray.TRAY_SIZE;
             }
             return startLength;
@@ -246,10 +293,10 @@ public class TwoSplitterConveyor implements ConveyorAccess {
                 max = Math.min(max, s);
             }
         }
-        if(max==Float.POSITIVE_INFINITY) {
+        if (max == Float.POSITIVE_INFINITY) {
             return 0;
         }
-        return Math.max(1-max, 0);
+        return Math.max(1 - max, 0);
     }
 
     private float computeMinY(final @Nullable Direction side, final float overlap) {
@@ -260,8 +307,8 @@ public class TwoSplitterConveyor implements ConveyorAccess {
         if (side == inSide || side == out0Side || side == out1Side) {
             return new Conveyor() {
                 @Override
-                public boolean tryInsert(final ConveyorTray tray, final float tickUsed) {
-                    return TwoSplitterConveyor.this.tryInsert(side, tray, tickUsed);
+                public boolean tryInsert(final ConveyorTray tray, final float tickUsed, final long tickOrder) {
+                    return TwoSplitterConveyor.this.tryInsert(side, tray, tickUsed, tickOrder);
                 }
 
                 @Override
@@ -288,8 +335,8 @@ public class TwoSplitterConveyor implements ConveyorAccess {
         if (side == null) {
             return new Conveyor() {
                 @Override
-                public boolean tryInsert(final ConveyorTray tray, final float tickUsed) {
-                    return TwoSplitterConveyor.this.tryInsert(null, tray, tickUsed);
+                public boolean tryInsert(final ConveyorTray tray, final float tickUsed, final long tickOrder) {
+                    return TwoSplitterConveyor.this.tryInsert(null, tray, tickUsed, tickOrder);
                 }
 
                 @Override
@@ -316,14 +363,15 @@ public class TwoSplitterConveyor implements ConveyorAccess {
         return null;
     }
 
-    public void tick() {
+    public void tick(final long tickOrder) {
         updateCache();
-        tick(Branch.NONE, inEntries);
-        tick(Branch.LEFT, out0Entries);
-        tick(Branch.RIGHT, out1Entries);
+        tick(Branch.NONE, inEntries, lastTicked);
+        tick(Branch.LEFT, out0Entries, lastTicked);
+        tick(Branch.RIGHT, out1Entries, lastTicked);
+        lastTicked = tickOrder;
     }
 
-    private void tick(final Branch branch, final List<AbstractConveyor.Entry> entries) {
+    private void tick(final Branch branch, final List<AbstractConveyor.Entry> entries, final long tickOrder) {
         for (final AbstractConveyor.Entry entry : entries) {
             if (entry.tickRemaining == -1.0F) {
                 entry.tickRemaining = 1.0F;
@@ -333,36 +381,17 @@ public class TwoSplitterConveyor implements ConveyorAccess {
         int i = 0;
         int entryCount = entries.size();
         while (i < entryCount) {
-            final AbstractConveyor.Entry entry = entries.get(i);
-            final float movement = entry.tickRemaining * speed;
-            float nextPos = movement + entry.pos;
-            if (i > 0) {
-                nextPos = Math.min(nextPos, entries.get(i - 1).pos - ConveyorTray.TRAY_SIZE);
-            }
-            boolean skip = false;
-            if (MathUtil.greaterThan(nextPos, maxPos)) {
-                final float tickUsed = (nextPos - maxPos) / movement;
-                entries.remove(i);
-                if (tryAdvance(branch, entry, tickUsed)) {
-                    syncNeeded = true;
-                    skip = true;
-                } else {
-                    entries.add(i, entry);
-                    nextPos = maxPos;
-                }
-            }
-            if (skip) {
-                entryCount = entryCount - 1;
-            } else {
-                entry.pos = nextPos;
-                updatePosition(branch, entry, false);
-                entry.tickRemaining = -1;
+            final AbstractConveyor.Entry entry = entries.remove(i);
+            if (moveIteration(maxPos, entries, entry, branch, i - 1, tickOrder)) {
+                entries.add(i, entry);
                 i++;
+            } else {
+                entryCount = entryCount - 1;
             }
         }
     }
 
-    private boolean tryAdvance(final Branch branch, final AbstractConveyor.Entry entry, final float tickUsed) {
+    private boolean tryAdvance(final Branch branch, final AbstractConveyor.Entry entry, final float tickUsed, final long tickOrder) {
         if (branch == Branch.NONE) {
             final Dir dir = decider.decide(entry.tray);
             if (dir == Dir.RIGHT) {
@@ -398,12 +427,12 @@ public class TwoSplitterConveyor implements ConveyorAccess {
             if (cache.output0 == null) {
                 return false;
             }
-            return cache.output0.tryInsert(entry.getTray(), tickUsed);
+            return cache.output0.tryInsert(entry.getTray(), tickUsed, tickOrder);
         } else {
             if (cache.output1 == null) {
                 return false;
             }
-            return cache.output1.tryInsert(entry.getTray(), tickUsed);
+            return cache.output1.tryInsert(entry.getTray(), tickUsed, tickOrder);
         }
     }
 

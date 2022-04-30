@@ -1,5 +1,6 @@
 package io.github.stuff_stuffs.tlm.common.block.entity.storage;
 
+import io.github.stuff_stuffs.tlm.common.TLM;
 import io.github.stuff_stuffs.tlm.common.api.conveyor.Conveyor;
 import io.github.stuff_stuffs.tlm.common.api.conveyor.ConveyorApi;
 import io.github.stuff_stuffs.tlm.common.api.resource.ConveyedResource;
@@ -69,7 +70,7 @@ public class StorageCrateUnloaderBlockEntity extends BlockEntity {
                     return;
                 }
                 final ConveyorTray tray = new ConveyorTray(resource);
-                if (conveyor.tryInsert(tray, 1)) {
+                if (conveyor.tryInsert(tray, 1, TLM.getTickOrder())) {
                     transaction.commit();
                 } else {
                     transaction.abort();

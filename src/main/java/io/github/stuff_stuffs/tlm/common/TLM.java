@@ -10,7 +10,6 @@ import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerBlockEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
-import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
@@ -22,6 +21,7 @@ public class TLM implements ModInitializer {
     public static final String MOD_ID = "tlm";
     public static final Logger LOGGER = LoggerFactory.getLogger("TLM");
     private static final Set<UpdatingBlockEntity> UPDATING_BLOCK_ENTITIES = new ReferenceOpenHashSet<>();
+    private static long tickOrder = Long.MIN_VALUE;
 
     @Override
     public void onInitialize() {
@@ -31,6 +31,7 @@ public class TLM implements ModInitializer {
         TLMScreenHandlerTypes.init();
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             UPDATING_BLOCK_ENTITIES.forEach(b -> b.update(buf -> UpdatingBlockEntitySender.send((BlockEntity) b, buf)));
+            tickOrder++;
             UpdatingBlockEntitySender.tick();
         });
         ServerBlockEntityEvents.BLOCK_ENTITY_LOAD.register((blockEntity, world) -> {
@@ -39,6 +40,10 @@ public class TLM implements ModInitializer {
             }
         });
         ServerBlockEntityEvents.BLOCK_ENTITY_UNLOAD.register((blockEntity, world) -> UPDATING_BLOCK_ENTITIES.remove(blockEntity));
+    }
+
+    public static long getTickOrder() {
+        return tickOrder;
     }
 
     public static Identifier createId(final String path) {

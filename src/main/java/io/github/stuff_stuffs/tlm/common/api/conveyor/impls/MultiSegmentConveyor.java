@@ -83,11 +83,11 @@ public class MultiSegmentConveyor extends AbstractSyncingConveyor {
     }
 
     @Override
-    protected boolean tryAdvance(final Entry entry, final float tickUsed) {
+    protected boolean tryAdvance(final Entry entry, final float tickUsed, long tickOrder) {
         if (cache.output == null) {
             return false;
         }
-        return cache.output.tryInsert(entry.getTray(), tickUsed);
+        return cache.output.tryInsert(entry.getTray(), tickUsed, tickOrder);
     }
 
     @Override
@@ -155,8 +155,8 @@ public class MultiSegmentConveyor extends AbstractSyncingConveyor {
         if (side == null) {
             return new Conveyor() {
                 @Override
-                public boolean tryInsert(final ConveyorTray tray, final float tickUsed) {
-                    return MultiSegmentConveyor.this.tryInsert(tray, null, tickUsed);
+                public boolean tryInsert(final ConveyorTray tray, final float tickUsed, long tickOrder) {
+                    return MultiSegmentConveyor.this.tryInsert(tray, null, tickUsed, tickOrder);
                 }
 
                 @Override
@@ -183,8 +183,8 @@ public class MultiSegmentConveyor extends AbstractSyncingConveyor {
         if (side == insertSide) {
             return new Conveyor() {
                 @Override
-                public boolean tryInsert(final ConveyorTray tray, final float tickUsed) {
-                    return MultiSegmentConveyor.this.tryInsert(tray, insertSide, tickUsed);
+                public boolean tryInsert(final ConveyorTray tray, final float tickUsed, long tickOrder) {
+                    return MultiSegmentConveyor.this.tryInsert(tray, insertSide, tickUsed, tickOrder);
                 }
 
                 @Override
@@ -211,8 +211,8 @@ public class MultiSegmentConveyor extends AbstractSyncingConveyor {
         if (side == outSide) {
             return new Conveyor() {
                 @Override
-                public boolean tryInsert(final ConveyorTray tray, final float tickUsed) {
-                    return MultiSegmentConveyor.this.tryInsert(tray, outSide, tickUsed);
+                public boolean tryInsert(final ConveyorTray tray, final float tickUsed, long tickOrder) {
+                    return MultiSegmentConveyor.this.tryInsert(tray, outSide, tickUsed, tickOrder);
                 }
 
                 @Override

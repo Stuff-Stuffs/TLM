@@ -7,12 +7,19 @@ import io.github.stuff_stuffs.tlm.common.block.entity.TLMBlockEntities;
 import io.github.stuff_stuffs.tlm.common.block.entity.conveyor.TwoSplitterConveyorBlockEntity;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.ShapeContext;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.state.StateManager;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.shape.VoxelShape;
+import net.minecraft.util.shape.VoxelShapes;
+import net.minecraft.world.BlockView;
 import org.jetbrains.annotations.Nullable;
 
 public class TwoSplitterConveyorBlock extends BlockEntityBlock<TwoSplitterConveyorBlockEntity> {
+    private static final VoxelShape SHAPE = VoxelShapes.cuboid(0, 0, 0, 1, 3 / 16.0, 1);
+
     public TwoSplitterConveyorBlock(final Settings settings) {
         super(settings, TwoSplitterConveyorBlockEntity::new, (world, state) -> TwoSplitterConveyorBlockEntity::tick);
     }
@@ -21,6 +28,11 @@ public class TwoSplitterConveyorBlock extends BlockEntityBlock<TwoSplitterConvey
     protected void appendProperties(final StateManager.Builder<Block, BlockState> builder) {
         super.appendProperties(builder);
         builder.add(TLMBlockProperties.CONVEYOR_STRAIGHT_FLAT_ORIENTATION_PROPERTY);
+    }
+
+    @Override
+    public VoxelShape getOutlineShape(final BlockState state, final BlockView world, final BlockPos pos, final ShapeContext context) {
+        return SHAPE;
     }
 
     @Nullable

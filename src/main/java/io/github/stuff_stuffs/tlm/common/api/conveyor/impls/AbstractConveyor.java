@@ -19,6 +19,7 @@ public abstract class AbstractConveyor implements ConveyorAccess {
     protected final List<Entry> entries = new ArrayList<>();
     protected final float speed;
     protected boolean syncNeeded = true;
+    protected long lastTicked = Long.MIN_VALUE;
 
     protected AbstractConveyor(final float speed) {
         nullSidedConveyor = computeConveyor(null);
@@ -60,7 +61,7 @@ public abstract class AbstractConveyor implements ConveyorAccess {
 
     protected abstract float computeMaxPos();
 
-    protected abstract boolean tryAdvance(Entry entry, float tickUsed);
+    protected abstract boolean tryAdvance(Entry entry, float tickUsed, long tickOrder);
 
     protected abstract void updatePosition(Entry entry, boolean override);
 
@@ -75,7 +76,7 @@ public abstract class AbstractConveyor implements ConveyorAccess {
 
     protected abstract @Nullable Conveyor computeConveyor(@Nullable final Direction side);
 
-    protected boolean tryInsert(final ConveyorTray tray, @Nullable final Direction direction, final float usedTick) {
+    protected boolean tryInsert(final ConveyorTray tray, @Nullable final Direction direction, final float usedTick, final long tickOrder) {
         final InsertMode mode = getInsertMode(tray, direction);
         return switch (mode) {
             case NONE -> false;
@@ -85,15 +86,22 @@ public abstract class AbstractConveyor implements ConveyorAccess {
                 if (minPos > ConveyorTray.TRAY_SIZE / 2.0F) {
                     yield false;
                 }
-                final float maxPos = Math.min(computeMaxPos(), getLastPos());
-                if (!MathUtil.greaterThan(maxPos, minPos)) {
+                final float maxPos = computeMaxPos();
+                final float clampedMaxPos = Math.min(maxPos, getLastPos());
+                if (!MathUtil.greaterThan(clampedMaxPos, minPos)) {
                     yield false;
                 }
                 syncNeeded = true;
                 final Entry entry = new Entry(tray, minPos, 1 - usedTick);
-                final int index = getInsertIndex(entries, entry, COMPARATOR);
-                entries.add(index, entry);
-                updatePosition(entry, mode == InsertMode.START_OVERRIDE);
+                if (lastTicked > tickOrder && usedTick < 1) {
+                    if (moveIteration(maxPos, entry, entries.size() - 1, lastTicked)) {
+                        final int index = getInsertIndex(entries, entry, COMPARATOR);
+                        entries.add(index, entry);
+                    }
+                } else {
+                    final int index = getInsertIndex(entries, entry, COMPARATOR);
+                    entries.add(index, entry);
+                }
                 yield true;
             }
             case ANY_OVERRIDE -> {
@@ -137,7 +145,37 @@ public abstract class AbstractConveyor implements ConveyorAccess {
         return low;
     }
 
-    public void tick() {
+    protected boolean moveIteration(final float maxPos, final Entry entry, final int next, final long tickOrder) {
+        if (entry.tickRemaining <= 0) {
+            updatePosition(entry, false);
+            return true;
+        }
+        final float movement = entry.tickRemaining * speed;
+        float nextPos = movement + entry.pos;
+        if (next >= 0) {
+            nextPos = Math.min(nextPos, entries.get(next).pos - ConveyorTray.TRAY_SIZE);
+        }
+        boolean skip = false;
+        if (MathUtil.greaterThan(nextPos, maxPos)) {
+            final float tickUsed = (nextPos - maxPos) / movement;
+            if (tryAdvance(entry, tickUsed, tickOrder)) {
+                syncNeeded = true;
+                skip = true;
+            } else {
+                nextPos = maxPos;
+            }
+        }
+        if (skip) {
+            return false;
+        } else {
+            entry.pos = nextPos;
+            updatePosition(entry, false);
+            entry.tickRemaining = -1;
+            return true;
+        }
+    }
+
+    public void tick(final long tickOrder) {
         updateCache();
         for (final Entry entry : entries) {
             if (entry.tickRemaining == -1.0F) {
@@ -148,33 +186,15 @@ public abstract class AbstractConveyor implements ConveyorAccess {
         int i = 0;
         int entryCount = entries.size();
         while (i < entryCount) {
-            final Entry entry = entries.get(i);
-            final float movement = entry.tickRemaining * speed;
-            float nextPos = movement + entry.pos;
-            if (i > 0) {
-                nextPos = Math.min(nextPos, entries.get(i - 1).pos - ConveyorTray.TRAY_SIZE);
-            }
-            boolean skip = false;
-            if (MathUtil.greaterThan(nextPos, maxPos)) {
-                final float tickUsed = (nextPos - maxPos) / movement;
-                entries.remove(i);
-                if (tryAdvance(entry, tickUsed)) {
-                    syncNeeded = true;
-                    skip = true;
-                } else {
-                    entries.add(i, entry);
-                    nextPos = maxPos;
-                }
-            }
-            if (skip) {
-                entryCount = entryCount - 1;
-            } else {
-                entry.pos = nextPos;
-                updatePosition(entry, false);
-                entry.tickRemaining = -1;
+            final Entry entry = entries.remove(i);
+            if (moveIteration(maxPos, entry, i - 1, lastTicked)) {
+                entries.add(i, entry);
                 i++;
+            } else {
+                entryCount = entryCount - 1;
             }
         }
+        lastTicked = tickOrder;
     }
 
     protected static final class Entry {

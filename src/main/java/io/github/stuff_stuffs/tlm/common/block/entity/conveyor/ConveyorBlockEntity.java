@@ -1,5 +1,6 @@
 package io.github.stuff_stuffs.tlm.common.block.entity.conveyor;
 
+import io.github.stuff_stuffs.tlm.common.TLM;
 import io.github.stuff_stuffs.tlm.common.api.UpdatingBlockEntity;
 import io.github.stuff_stuffs.tlm.common.api.conveyor.*;
 import io.github.stuff_stuffs.tlm.common.api.conveyor.impls.AbstractConveyor;
@@ -104,6 +105,6 @@ public class ConveyorBlockEntity extends BlockEntity implements ConveyorSupplier
             conveyor.conveyor.setup(inputConveyorLikeCache, outputConveyorLikeCache, outputConveyorCache);
             conveyor.initialized = true;
         }
-        conveyor.conveyor.tick();
+        conveyor.conveyor.tick(TLM.getTickOrder());
     }
 }

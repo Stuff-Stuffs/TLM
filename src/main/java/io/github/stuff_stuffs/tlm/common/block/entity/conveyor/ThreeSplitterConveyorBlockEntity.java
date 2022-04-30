@@ -1,5 +1,6 @@
 package io.github.stuff_stuffs.tlm.common.block.entity.conveyor;
 
+import io.github.stuff_stuffs.tlm.common.TLM;
 import io.github.stuff_stuffs.tlm.common.api.UpdatingBlockEntity;
 import io.github.stuff_stuffs.tlm.common.api.conveyor.*;
 import io.github.stuff_stuffs.tlm.common.api.conveyor.impls.ThreeSplitterConveyor;
@@ -200,7 +201,7 @@ public class ThreeSplitterConveyorBlockEntity extends BlockEntity implements Upd
             conveyor.conveyor.setup(inputConveyorLikeCache, output0ConveyorLikeCache, output0ConveyorCache, output1ConveyorLikeCache, output1ConveyorCache, output2ConveyorLikeCache, output2ConveyorCache);
             conveyor.initialized = true;
         }
-        conveyor.conveyor.tick();
+        conveyor.conveyor.tick(TLM.getTickOrder());
     }
 
     public enum Choice {

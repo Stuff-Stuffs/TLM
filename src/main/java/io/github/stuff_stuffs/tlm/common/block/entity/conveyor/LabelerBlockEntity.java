@@ -1,5 +1,6 @@
 package io.github.stuff_stuffs.tlm.common.block.entity.conveyor;
 
+import io.github.stuff_stuffs.tlm.common.TLM;
 import io.github.stuff_stuffs.tlm.common.api.conveyor.Conveyor;
 import io.github.stuff_stuffs.tlm.common.api.conveyor.ConveyorApi;
 import io.github.stuff_stuffs.tlm.common.api.conveyor.ConveyorLike;
@@ -9,10 +10,7 @@ import io.github.stuff_stuffs.tlm.common.api.conveyor.impls.LabelerConveyor;
 import io.github.stuff_stuffs.tlm.common.api.resource.ConveyorTrayDataStack;
 import io.github.stuff_stuffs.tlm.common.block.TLMBlockProperties;
 import io.github.stuff_stuffs.tlm.common.block.entity.TLMBlockEntities;
-import io.github.stuff_stuffs.tlm.common.network.UpdatingBlockEntitySender;
 import io.github.stuff_stuffs.tlm.common.screen.LabelerBlockScreenHandler;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
@@ -20,19 +18,16 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.network.Packet;
-import net.minecraft.network.PacketByteBuf;
 import net.minecraft.network.listener.ClientPlayPacketListener;
 import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
 import net.minecraft.screen.NamedScreenHandlerFactory;
 import net.minecraft.screen.ScreenHandler;
-import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.function.Supplier;
 
 public class LabelerBlockEntity extends ConveyorBlockEntity implements NamedScreenHandlerFactory {
@@ -112,6 +107,6 @@ public class LabelerBlockEntity extends ConveyorBlockEntity implements NamedScre
             conveyor.conveyor.setup(inputConveyorLikeCache, outputConveyorLikeCache, outputConveyorCache);
             conveyor.initialized = true;
         }
-        conveyor.conveyor.tick();
+        conveyor.conveyor.tick(TLM.getTickOrder());
     }
 }
