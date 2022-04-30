@@ -24,7 +24,7 @@ public final class UpdatingBlockEntitySender {
     public static final Identifier IDENTIFIER = TLM.createId("block_entity_update");
     private static final Map<ServerWorld, List<Data>> BUFFERS_BY_WORLD = new WeakHashMap<>();
 
-    public static void send(final BlockEntity blockEntity, final PacketByteBuf buf, final Collection<ServerPlayerEntity> receivers) {
+    public static void send(final BlockEntity blockEntity, final PacketByteBuf buf) {
         final PacketByteBuf posBuf = PacketByteBufs.create();
         posBuf.writeVarInt(Registry.BLOCK_ENTITY_TYPE.getRawId(blockEntity.getType()));
         posBuf.writeBlockPos(blockEntity.getPos());
@@ -54,8 +54,15 @@ public final class UpdatingBlockEntitySender {
             for (final ServerPlayerEntity entity : entities) {
                 final ChunkSectionPos watchedPos = entity.getWatchedSection();
                 if (ThreadedAnvilChunkStorage.isWithinDistance(watchedPos.getX(), watchedPos.getZ(), chunkPos.x, chunkPos.z, watchDistance)) {
-                    final PacketByteBuf buf = buffers.computeIfAbsent(entity, i -> PacketByteBufs.create());
-                    buf.writeBytes(datum.buf());
+                    PacketByteBuf buf = buffers.computeIfAbsent(entity, i -> PacketByteBufs.create());
+                    if (buf.writerIndex() + datum.buf.writerIndex() < /*Max Packet Size with extra room for writing id*/ 8388000) {
+                        buf.writeBytes(datum.buf());
+                    } else {
+                        ServerPlayNetworking.send(entity, IDENTIFIER, buf);
+                        buf = PacketByteBufs.create();
+                        buf.writeBytes(datum.buf());
+                        buffers.put(entity, buf);
+                    }
                 }
             }
         }

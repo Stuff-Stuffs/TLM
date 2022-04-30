@@ -30,7 +30,7 @@ public class TLM implements ModInitializer {
         TLMItems.init();
         TLMScreenHandlerTypes.init();
         ServerTickEvents.END_SERVER_TICK.register(server -> {
-            UPDATING_BLOCK_ENTITIES.forEach(b -> b.update(buf -> UpdatingBlockEntitySender.send((BlockEntity) b, buf, PlayerLookup.tracking((BlockEntity) b))));
+            UPDATING_BLOCK_ENTITIES.forEach(b -> b.update(buf -> UpdatingBlockEntitySender.send((BlockEntity) b, buf)));
             UpdatingBlockEntitySender.tick();
         });
         ServerBlockEntityEvents.BLOCK_ENTITY_LOAD.register((blockEntity, world) -> {
