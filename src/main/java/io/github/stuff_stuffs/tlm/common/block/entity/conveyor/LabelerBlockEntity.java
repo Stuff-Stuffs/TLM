@@ -113,16 +113,5 @@ public class LabelerBlockEntity extends ConveyorBlockEntity implements NamedScre
             conveyor.initialized = true;
         }
         conveyor.conveyor.tick();
-        if (!world.isClient() && conveyor.conveyor.isSyncNeeded()) {
-            final Collection<ServerPlayerEntity> tracking = PlayerLookup.tracking(conveyor);
-            if (tracking.isEmpty()) {
-                return;
-            }
-            final PacketByteBuf buf = PacketByteBufs.create();
-            buf.writeByte(CONVEYOR_SYNC);
-            conveyor.conveyor.writeSyncToBuf(buf);
-            UpdatingBlockEntitySender.send(conveyor, buf, tracking);
-            conveyor.conveyor.clearSyncFlag();
-        }
     }
 }

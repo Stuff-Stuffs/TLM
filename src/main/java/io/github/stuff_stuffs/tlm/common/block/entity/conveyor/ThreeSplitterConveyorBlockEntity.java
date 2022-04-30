@@ -7,10 +7,8 @@ import io.github.stuff_stuffs.tlm.common.api.resource.ConveyorTray;
 import io.github.stuff_stuffs.tlm.common.api.resource.ConveyorTrayDataStack;
 import io.github.stuff_stuffs.tlm.common.block.TLMBlockProperties;
 import io.github.stuff_stuffs.tlm.common.block.entity.TLMBlockEntities;
-import io.github.stuff_stuffs.tlm.common.network.UpdatingBlockEntitySender;
 import io.github.stuff_stuffs.tlm.common.screen.ThreeSplitterBlockScreenHandler;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -18,7 +16,6 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.screen.NamedScreenHandlerFactory;
 import net.minecraft.screen.ScreenHandler;
-import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -27,9 +24,9 @@ import net.minecraft.util.math.random.SimpleRandom;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class ThreeSplitterConveyorBlockEntity extends BlockEntity implements UpdatingBlockEntity, ConveyorSupplier, NamedScreenHandlerFactory {
@@ -154,6 +151,17 @@ public class ThreeSplitterConveyorBlockEntity extends BlockEntity implements Upd
     }
 
     @Override
+    public void update(final Consumer<PacketByteBuf> consumer) {
+        if (conveyor.isSyncNeeded()) {
+            final PacketByteBuf buf = PacketByteBufs.create();
+            buf.writeByte(ConveyorBlockEntity.CONVEYOR_SYNC);
+            conveyor.writeSyncToBuf(buf);
+            conveyor.clearSyncFlag();
+            consumer.accept(buf);
+        }
+    }
+
+    @Override
     public ConveyorAccess getConveyorAccess() {
         return conveyor;
     }
@@ -193,17 +201,6 @@ public class ThreeSplitterConveyorBlockEntity extends BlockEntity implements Upd
             conveyor.initialized = true;
         }
         conveyor.conveyor.tick();
-        if (!world.isClient() && conveyor.conveyor.isSyncNeeded()) {
-            final Collection<ServerPlayerEntity> tracking = PlayerLookup.tracking(conveyor);
-            if (tracking.isEmpty()) {
-                return;
-            }
-            final PacketByteBuf buf = PacketByteBufs.create();
-            buf.writeByte(ConveyorBlockEntity.CONVEYOR_SYNC);
-            conveyor.conveyor.writeSyncToBuf(buf);
-            UpdatingBlockEntitySender.send(conveyor, buf, tracking);
-            conveyor.conveyor.clearSyncFlag();
-        }
     }
 
     public enum Choice {

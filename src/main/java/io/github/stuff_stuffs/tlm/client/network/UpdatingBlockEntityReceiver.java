@@ -2,6 +2,7 @@ package io.github.stuff_stuffs.tlm.client.network;
 
 import io.github.stuff_stuffs.tlm.common.api.UpdatingBlockEntity;
 import io.github.stuff_stuffs.tlm.common.network.UpdatingBlockEntitySender;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
@@ -13,23 +14,34 @@ import net.minecraft.network.PacketByteBuf;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.registry.Registry;
 
+import java.util.Map;
+
 public final class UpdatingBlockEntityReceiver {
     public static void init() {
         ClientPlayNetworking.registerGlobalReceiver(UpdatingBlockEntitySender.IDENTIFIER, UpdatingBlockEntityReceiver::receive);
     }
 
     private static void receive(final MinecraftClient client, final ClientPlayNetworkHandler handler, final PacketByteBuf buf, final PacketSender sender) {
-        final BlockEntityType<?> type = Registry.BLOCK_ENTITY_TYPE.get(buf.readVarInt());
-        final BlockPos pos = buf.readBlockPos();
-        final PacketByteBuf slice = PacketByteBufs.slice(buf);
-        slice.retain();
+        final Map<Key, PacketByteBuf> bufs = new Reference2ReferenceOpenHashMap<>();
+        while (buf.readableBytes() > 0) {
+            final BlockEntityType<?> type = Registry.BLOCK_ENTITY_TYPE.get(buf.readVarInt());
+            final BlockPos pos = buf.readBlockPos();
+            final int len = buf.readVarInt();
+            bufs.put(new Key(type, pos), PacketByteBufs.readSlice(buf, len));
+        }
+        buf.retain();
         client.execute(() -> {
-            final BlockEntity blockEntity = client.world.getBlockEntity(pos);
-            if (blockEntity instanceof UpdatingBlockEntity updateHandler && blockEntity.getType() == type) {
-                updateHandler.handleUpdate(slice);
+            for (final Map.Entry<Key, PacketByteBuf> entry : bufs.entrySet()) {
+                final BlockEntity entity = client.world.getBlockEntity(entry.getKey().pos());
+                if (entity != null && entity.getType() == entry.getKey().type() && entity instanceof UpdatingBlockEntity updating) {
+                    updating.handleUpdate(entry.getValue());
+                }
             }
-            slice.release();
+            buf.release();
         });
+    }
+
+    private record Key(BlockEntityType<?> type, BlockPos pos) {
     }
 
     private UpdatingBlockEntityReceiver() {

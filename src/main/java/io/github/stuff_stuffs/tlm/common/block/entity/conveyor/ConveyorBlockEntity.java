@@ -7,22 +7,19 @@ import io.github.stuff_stuffs.tlm.common.api.conveyor.impls.MultiSegmentConveyor
 import io.github.stuff_stuffs.tlm.common.api.conveyor.impls.SlopeCorrectConveyor;
 import io.github.stuff_stuffs.tlm.common.block.TLMBlockProperties;
 import io.github.stuff_stuffs.tlm.common.block.entity.TLMBlockEntities;
-import io.github.stuff_stuffs.tlm.common.network.UpdatingBlockEntitySender;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.network.PacketByteBuf;
-import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class ConveyorBlockEntity extends BlockEntity implements ConveyorSupplier, UpdatingBlockEntity {
@@ -49,7 +46,18 @@ public class ConveyorBlockEntity extends BlockEntity implements ConveyorSupplier
         }
     }
 
-    protected AbstractConveyor createConveyor(final BlockPos pos, BlockState state) {
+    @Override
+    public void update(final Consumer<PacketByteBuf> consumer) {
+        if (conveyor.isSyncNeeded()) {
+            final PacketByteBuf buf = PacketByteBufs.create();
+            buf.writeByte(CONVEYOR_SYNC);
+            conveyor.writeSyncToBuf(buf);
+            conveyor.clearSyncFlag();
+            consumer.accept(buf);
+        }
+    }
+
+    protected AbstractConveyor createConveyor(final BlockPos pos, final BlockState state) {
         return createConveyor(pos, state.get(TLMBlockProperties.CONVEYOR_ORIENTATION_PROPERTY), BASE_CONVEYOR_SPEED);
     }
 
@@ -97,16 +105,5 @@ public class ConveyorBlockEntity extends BlockEntity implements ConveyorSupplier
             conveyor.initialized = true;
         }
         conveyor.conveyor.tick();
-        if (!world.isClient() && conveyor.conveyor.isSyncNeeded()) {
-            final Collection<ServerPlayerEntity> tracking = PlayerLookup.tracking(conveyor);
-            if (tracking.isEmpty()) {
-                return;
-            }
-            final PacketByteBuf buf = PacketByteBufs.create();
-            buf.writeByte(CONVEYOR_SYNC);
-            conveyor.conveyor.writeSyncToBuf(buf);
-            UpdatingBlockEntitySender.send(conveyor, buf, tracking);
-            conveyor.conveyor.clearSyncFlag();
-        }
     }
 }
