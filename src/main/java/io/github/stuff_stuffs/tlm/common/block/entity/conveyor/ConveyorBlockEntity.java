@@ -106,5 +106,8 @@ public class ConveyorBlockEntity extends BlockEntity implements ConveyorSupplier
             conveyor.initialized = true;
         }
         conveyor.conveyor.tick(TLM.getTickOrder());
+        if(conveyor.conveyor.isSyncNeeded()) {
+            conveyor.markDirty();
+        }
     }
 }

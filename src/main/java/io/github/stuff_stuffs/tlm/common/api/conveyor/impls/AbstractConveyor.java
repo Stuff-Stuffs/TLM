@@ -91,16 +91,17 @@ public abstract class AbstractConveyor implements ConveyorAccess {
                 if (!MathUtil.greaterThan(clampedMaxPos, minPos)) {
                     yield false;
                 }
-                syncNeeded = true;
                 final Entry entry = new Entry(tray, minPos, 1 - usedTick);
                 if (lastTicked > tickOrder && usedTick < 1) {
                     if (moveIteration(maxPos, entry, entries.size() - 1, lastTicked)) {
                         final int index = getInsertIndex(entries, entry, COMPARATOR);
                         entries.add(index, entry);
+                        syncNeeded = true;
                     }
                 } else {
                     final int index = getInsertIndex(entries, entry, COMPARATOR);
                     entries.add(index, entry);
+                    syncNeeded = true;
                 }
                 yield true;
             }
@@ -148,6 +149,7 @@ public abstract class AbstractConveyor implements ConveyorAccess {
     protected boolean moveIteration(final float maxPos, final Entry entry, final int next, final long tickOrder) {
         if (entry.tickRemaining <= 0) {
             updatePosition(entry, false);
+            entry.tickRemaining = 1;
             return true;
         }
         final float movement = entry.tickRemaining * speed;
@@ -157,7 +159,7 @@ public abstract class AbstractConveyor implements ConveyorAccess {
         }
         boolean skip = false;
         if (MathUtil.greaterThan(nextPos, maxPos)) {
-            final float tickUsed = (nextPos - maxPos) / movement;
+            final float tickUsed = (maxPos - entry.pos) / movement;
             if (tryAdvance(entry, tickUsed, tickOrder)) {
                 syncNeeded = true;
                 skip = true;

@@ -106,7 +106,7 @@ public class TwoSplitterConveyor implements ConveyorAccess {
             } else {
                 final int index = AbstractConveyor.getInsertIndex(inEntries, entry, COMPARATOR);
                 inEntries.add(index, entry);
-                updatePosition(Branch.NONE, entry, true);
+                updatePosition(Branch.NONE, entry, false);
             }
         } else {
             final float maxPos = Math.min(computeMaxPos(Branch.NONE), getLastPos(Branch.NONE));
@@ -144,7 +144,7 @@ public class TwoSplitterConveyor implements ConveyorAccess {
         }
         boolean skip = false;
         if (MathUtil.greaterThan(nextPos, maxPos)) {
-            final float tickUsed = (nextPos - maxPos) / movement;
+            final float tickUsed = (maxPos - entry.pos) / movement;
             if (tryAdvance(branch, entry, tickUsed, tickOrder)) {
                 syncNeeded = true;
                 skip = true;

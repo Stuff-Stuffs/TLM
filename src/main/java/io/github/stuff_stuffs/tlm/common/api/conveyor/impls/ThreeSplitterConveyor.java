@@ -110,14 +110,14 @@ public class ThreeSplitterConveyor implements ConveyorAccess {
             }
             final AbstractConveyor.Entry entry = new AbstractConveyor.Entry(tray, minPos, 1 - tickUsed);
             if (tickOrder < lastTicked && tickUsed < 1) {
-                if (moveIteration(maxPos, out2Entries, entry, Branch.NONE, out2Entries.size() - 1, lastTicked)) {
-                    final int index = AbstractConveyor.getInsertIndex(out2Entries, entry, COMPARATOR);
-                    out2Entries.add(index, entry);
+                if (moveIteration(maxPos, inEntries, entry, Branch.NONE, inEntries.size() - 1, lastTicked)) {
+                    final int index = AbstractConveyor.getInsertIndex(inEntries, entry, COMPARATOR);
+                    inEntries.add(index, entry);
                 }
             } else {
-                final int index = AbstractConveyor.getInsertIndex(out2Entries, entry, COMPARATOR);
-                out2Entries.add(index, entry);
-                updatePosition(Branch.NONE, entry, true);
+                final int index = AbstractConveyor.getInsertIndex(inEntries, entry, COMPARATOR);
+                inEntries.add(index, entry);
+                updatePosition(Branch.NONE, entry, false);
             }
         } else {
             final float maxPos = Math.min(computeMaxPos(Branch.NONE), getLastPos(Branch.NONE));
@@ -392,6 +392,7 @@ public class ThreeSplitterConveyor implements ConveyorAccess {
     private boolean moveIteration(final float maxPos, final List<AbstractConveyor.Entry> entries, final AbstractConveyor.Entry entry, final Branch branch, final int next, final long tickOrder) {
         if (entry.tickRemaining <= 0) {
             updatePosition(branch, entry, false);
+            entry.tickRemaining = -1;
             return true;
         }
         final float movement = entry.tickRemaining * speed;
@@ -414,7 +415,7 @@ public class ThreeSplitterConveyor implements ConveyorAccess {
         }
         boolean skip = false;
         if (MathUtil.greaterThan(nextPos, maxPos)) {
-            final float tickUsed = (nextPos - maxPos) / movement;
+            final float tickUsed = (maxPos - entry.pos) / movement;
             if (tryAdvance(branch, entry, tickUsed, tickOrder)) {
                 syncNeeded = true;
                 skip = true;

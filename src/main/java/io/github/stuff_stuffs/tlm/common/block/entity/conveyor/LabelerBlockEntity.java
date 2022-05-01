@@ -108,5 +108,8 @@ public class LabelerBlockEntity extends ConveyorBlockEntity implements NamedScre
             conveyor.initialized = true;
         }
         conveyor.conveyor.tick(TLM.getTickOrder());
+        if(conveyor.conveyor.isSyncNeeded()) {
+            conveyor.markDirty();
+        }
     }
 }

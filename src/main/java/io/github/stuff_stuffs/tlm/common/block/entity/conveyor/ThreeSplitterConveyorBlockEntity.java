@@ -202,6 +202,9 @@ public class ThreeSplitterConveyorBlockEntity extends BlockEntity implements Upd
             conveyor.initialized = true;
         }
         conveyor.conveyor.tick(TLM.getTickOrder());
+        if(conveyor.conveyor.isSyncNeeded()) {
+            conveyor.markDirty();
+        }
     }
 
     public enum Choice {

@@ -192,6 +192,9 @@ public class TwoSplitterConveyorBlockEntity extends BlockEntity implements Updat
             conveyor.initialized = true;
         }
         conveyor.conveyor.tick(TLM.getTickOrder());
+        if(conveyor.conveyor.isSyncNeeded()) {
+            conveyor.markDirty();
+        }
     }
 
     public enum Choice {
