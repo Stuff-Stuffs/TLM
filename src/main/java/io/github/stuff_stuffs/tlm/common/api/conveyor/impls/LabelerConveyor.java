@@ -25,16 +25,14 @@ public class LabelerConveyor extends SimpleConveyor {
 
     @Override
     protected boolean moveIteration(final float maxPos, final Entry entry, final int next, final long tickOrder) {
-        if (!MathUtil.greaterThan(entry.pos, length * 0.5F)) {
-            final boolean b = super.moveIteration(maxPos, entry, next, tickOrder);
-            if (!b || MathUtil.greaterThan(entry.pos, 0.5F * length)) {
-                final ConveyorTrayDataStack stack = entry.getTray().getStack(stackIndex);
-                if (!stack.isFull()) {
-                    stack.push(label);
-                }
+        final boolean beforeHalfway = !MathUtil.greaterThan(entry.pos, length * 0.5F);
+        final boolean onConveyor = super.moveIteration(maxPos, entry, next, tickOrder);
+        if ( beforeHalfway&& (!onConveyor || MathUtil.greaterThan(entry.pos, 0.5F * length))) {
+            final ConveyorTrayDataStack stack = entry.getTray().getStack(stackIndex);
+            if (!stack.isFull()) {
+                stack.push(label);
             }
-            return b;
         }
-        return super.moveIteration(maxPos, entry, next, tickOrder);
+        return onConveyor;
     }
 }

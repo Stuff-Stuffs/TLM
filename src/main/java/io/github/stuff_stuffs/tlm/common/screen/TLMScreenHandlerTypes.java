@@ -7,6 +7,7 @@ import net.minecraft.util.registry.Registry;
 public final class TLMScreenHandlerTypes {
     public static final ScreenHandlerType<LabelerBlockScreenHandler> LABELER_BLOCK_CONFIGURATION_SCREEN_HANDLER_TYPE = new ScreenHandlerType<>((syncId, playerInventory) -> new LabelerBlockScreenHandler(syncId));
     public static final ScreenHandlerType<TwoSplitterBlockScreenHandler> TWO_SPLITTER_BLOCK_SCREEN_HANDLER_TYPE = new ScreenHandlerType<>(((syncId, playerInventory) -> new TwoSplitterBlockScreenHandler(syncId)));
+    public static final ScreenHandlerType<ThreeSplitterBlockScreenHandler> THREE_SPLITTER_BLOCK_SCREEN_HANDLER_TYPE = new ScreenHandlerType<>((syncId, playerInventory) -> new ThreeSplitterBlockScreenHandler(syncId));
 
     public static void init() {
         Registry.register(Registry.SCREEN_HANDLER, TLM.createId("labeler_config"), LABELER_BLOCK_CONFIGURATION_SCREEN_HANDLER_TYPE);

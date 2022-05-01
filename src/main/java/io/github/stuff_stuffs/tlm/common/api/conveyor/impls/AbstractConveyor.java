@@ -5,6 +5,7 @@ import io.github.stuff_stuffs.tlm.common.api.conveyor.ConveyorAccess;
 import io.github.stuff_stuffs.tlm.common.api.conveyor.ConveyorLike;
 import io.github.stuff_stuffs.tlm.common.api.resource.ConveyorTray;
 import io.github.stuff_stuffs.tlm.common.util.MathUtil;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.util.math.Direction;
 import org.jetbrains.annotations.Nullable;
@@ -13,7 +14,7 @@ import java.util.*;
 import java.util.function.Supplier;
 
 public abstract class AbstractConveyor implements ConveyorAccess {
-    private static final Comparator<Entry> COMPARATOR = Comparator.comparingDouble(entry -> entry.pos);
+    protected static final Comparator<Entry> COMPARATOR = Comparator.comparingDouble(entry -> entry.pos);
     private final Conveyor nullSidedConveyor;
     private final EnumMap<Direction, Conveyor> conveyorCache;
     protected final List<Entry> entries = new ArrayList<>();
@@ -54,6 +55,10 @@ public abstract class AbstractConveyor implements ConveyorAccess {
     public abstract void writeSyncToBuf(PacketByteBuf buf);
 
     public abstract void readSyncFromBuf(PacketByteBuf buf);
+
+    public abstract void writeToNbt(NbtCompound compound);
+
+    public abstract void readFromNbt(NbtCompound compound);
 
     protected abstract void updateCache();
 

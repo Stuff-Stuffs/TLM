@@ -29,7 +29,7 @@ public class ThreeSplitterBlockScreenHandler extends ScreenHandler {
     private final Property stackProperty;
 
     public ThreeSplitterBlockScreenHandler(final int syncId) {
-        super(TLMScreenHandlerTypes.TWO_SPLITTER_BLOCK_SCREEN_HANDLER_TYPE, syncId);
+        super(TLMScreenHandlerTypes.THREE_SPLITTER_BLOCK_SCREEN_HANDLER_TYPE, syncId);
         entity = null;
         propertyMap = new EnumMap<>(ConveyorTrayDataStack.State.class);
         for (final ConveyorTrayDataStack.State state : ConveyorTrayDataStack.State.values()) {
@@ -94,7 +94,7 @@ public class ThreeSplitterBlockScreenHandler extends ScreenHandler {
     }
 
     public ThreeSplitterBlockScreenHandler(final ThreeSplitterConveyorBlockEntity entity, final int syncId) {
-        super(TLMScreenHandlerTypes.TWO_SPLITTER_BLOCK_SCREEN_HANDLER_TYPE, syncId);
+        super(TLMScreenHandlerTypes.THREE_SPLITTER_BLOCK_SCREEN_HANDLER_TYPE, syncId);
         this.entity = entity;
         propertyMap = new EnumMap<>(ConveyorTrayDataStack.State.class);
         final ThreeSplitterConveyorBlockEntity.Choice[] choices = ThreeSplitterConveyorBlockEntity.Choice.values();

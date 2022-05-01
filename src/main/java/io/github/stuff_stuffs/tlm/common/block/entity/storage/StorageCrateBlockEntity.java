@@ -92,9 +92,14 @@ public class StorageCrateBlockEntity extends BlockEntity implements StorageCrate
                                                               SerializableStorage<T> storage) {
     }
 
-    private static final class StorageDelegate extends SnapshotParticipant<TypedPair<?, ?>> {
+    private final class StorageDelegate extends SnapshotParticipant<TypedPair<?, ?>> {
         private static final TypedPair<?, ?> EMPTY = new TypedPair<>(null, null);
         private TypedPair<?, ?> storage;
+
+        @Override
+        protected void onFinalCommit() {
+            markDirty();
+        }
 
         @Override
         protected TypedPair<?, ?> createSnapshot() {

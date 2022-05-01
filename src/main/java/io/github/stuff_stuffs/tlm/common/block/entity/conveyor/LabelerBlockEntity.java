@@ -40,11 +40,13 @@ public class LabelerBlockEntity extends ConveyorBlockEntity implements NamedScre
 
     @Override
     protected void writeNbt(final NbtCompound nbt) {
+        super.writeNbt(nbt);
         nbt.putInt("state", labelState.idx);
     }
 
     @Override
     public void readNbt(final NbtCompound nbt) {
+        super.readNbt(nbt);
         if (nbt.contains("state", NbtElement.INT_TYPE)) {
             labelState = ConveyorTrayDataStack.State.getByIdx(nbt.getInt("state"));
             ((LabelerConveyor) conveyor).setLabel(labelState);
@@ -108,7 +110,7 @@ public class LabelerBlockEntity extends ConveyorBlockEntity implements NamedScre
             conveyor.initialized = true;
         }
         conveyor.conveyor.tick(TLM.getTickOrder());
-        if(conveyor.conveyor.isSyncNeeded()) {
+        if (conveyor.conveyor.isSyncNeeded()) {
             conveyor.markDirty();
         }
     }

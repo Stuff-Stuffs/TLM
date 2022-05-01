@@ -3,6 +3,9 @@ package io.github.stuff_stuffs.tlm.common.api.conveyor.impls;
 import io.github.stuff_stuffs.tlm.common.api.conveyor.Conveyor;
 import io.github.stuff_stuffs.tlm.common.api.conveyor.ConveyorLike;
 import io.github.stuff_stuffs.tlm.common.api.resource.ConveyorTray;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtList;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.Nullable;
@@ -50,6 +53,29 @@ public class MultiSegmentConveyor extends AbstractSyncingConveyor {
     }
 
     @Override
+    public void writeToNbt(final NbtCompound compound) {
+        final NbtList list = new NbtList();
+        for (final Entry entry : entries) {
+            final NbtCompound nbt = new NbtCompound();
+            nbt.put("data", entry.tray.writeToNbt(false));
+            nbt.putFloat("pos", entry.pos);
+            list.add(nbt);
+        }
+        compound.put("entries", list);
+    }
+
+    @Override
+    public void readFromNbt(final NbtCompound compound) {
+        entries.clear();
+        final NbtList list = compound.getList("entries", NbtElement.COMPOUND_TYPE);
+        for (final NbtElement element : list) {
+            final NbtCompound nbt = (NbtCompound) element;
+            final Entry entry = new Entry(ConveyorTray.readFromNbt(nbt.getCompound("data"), false), nbt.getFloat("pos"), 1);
+            entries.add(getInsertIndex(entries, entry, COMPARATOR), entry);
+        }
+    }
+
+    @Override
     protected void updateCache() {
         cache.in = inGetter.get();
         final Conveyor output = outputGetter.get();
@@ -83,7 +109,7 @@ public class MultiSegmentConveyor extends AbstractSyncingConveyor {
     }
 
     @Override
-    protected boolean tryAdvance(final Entry entry, final float tickUsed, long tickOrder) {
+    protected boolean tryAdvance(final Entry entry, final float tickUsed, final long tickOrder) {
         if (cache.output == null) {
             return false;
         }
@@ -155,7 +181,7 @@ public class MultiSegmentConveyor extends AbstractSyncingConveyor {
         if (side == null) {
             return new Conveyor() {
                 @Override
-                public boolean tryInsert(final ConveyorTray tray, final float tickUsed, long tickOrder) {
+                public boolean tryInsert(final ConveyorTray tray, final float tickUsed, final long tickOrder) {
                     return MultiSegmentConveyor.this.tryInsert(tray, null, tickUsed, tickOrder);
                 }
 
@@ -183,7 +209,7 @@ public class MultiSegmentConveyor extends AbstractSyncingConveyor {
         if (side == insertSide) {
             return new Conveyor() {
                 @Override
-                public boolean tryInsert(final ConveyorTray tray, final float tickUsed, long tickOrder) {
+                public boolean tryInsert(final ConveyorTray tray, final float tickUsed, final long tickOrder) {
                     return MultiSegmentConveyor.this.tryInsert(tray, insertSide, tickUsed, tickOrder);
                 }
 
@@ -211,7 +237,7 @@ public class MultiSegmentConveyor extends AbstractSyncingConveyor {
         if (side == outSide) {
             return new Conveyor() {
                 @Override
-                public boolean tryInsert(final ConveyorTray tray, final float tickUsed, long tickOrder) {
+                public boolean tryInsert(final ConveyorTray tray, final float tickUsed, final long tickOrder) {
                     return MultiSegmentConveyor.this.tryInsert(tray, outSide, tickUsed, tickOrder);
                 }
 

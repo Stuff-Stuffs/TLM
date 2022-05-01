@@ -12,6 +12,7 @@ import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityType;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -56,6 +57,16 @@ public class ConveyorBlockEntity extends BlockEntity implements ConveyorSupplier
             conveyor.clearSyncFlag();
             consumer.accept(buf);
         }
+    }
+
+    @Override
+    protected void writeNbt(final NbtCompound nbt) {
+        conveyor.writeToNbt(nbt);
+    }
+
+    @Override
+    public void readNbt(final NbtCompound nbt) {
+        conveyor.readFromNbt(nbt);
     }
 
     protected AbstractConveyor createConveyor(final BlockPos pos, final BlockState state) {
@@ -106,7 +117,7 @@ public class ConveyorBlockEntity extends BlockEntity implements ConveyorSupplier
             conveyor.initialized = true;
         }
         conveyor.conveyor.tick(TLM.getTickOrder());
-        if(conveyor.conveyor.isSyncNeeded()) {
+        if (conveyor.conveyor.isSyncNeeded()) {
             conveyor.markDirty();
         }
     }

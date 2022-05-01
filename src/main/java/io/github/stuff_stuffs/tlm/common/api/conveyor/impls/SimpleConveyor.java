@@ -3,6 +3,9 @@ package io.github.stuff_stuffs.tlm.common.api.conveyor.impls;
 import io.github.stuff_stuffs.tlm.common.api.conveyor.Conveyor;
 import io.github.stuff_stuffs.tlm.common.api.conveyor.ConveyorLike;
 import io.github.stuff_stuffs.tlm.common.api.resource.ConveyorTray;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtList;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +44,29 @@ public class SimpleConveyor extends AbstractSyncingConveyor {
         this.inGetter = inGetter;
         this.outGetter = outGetter;
         this.outputGetter = outputGetter;
+    }
+
+    @Override
+    public void writeToNbt(final NbtCompound compound) {
+        final NbtList list = new NbtList();
+        for (final Entry entry : entries) {
+            final NbtCompound nbt = new NbtCompound();
+            nbt.put("data", entry.tray.writeToNbt(false));
+            nbt.putFloat("pos", entry.pos);
+            list.add(nbt);
+        }
+        compound.put("entries", list);
+    }
+
+    @Override
+    public void readFromNbt(final NbtCompound compound) {
+        entries.clear();
+        final NbtList list = compound.getList("entries", NbtElement.COMPOUND_TYPE);
+        for (final NbtElement element : list) {
+            final NbtCompound nbt = (NbtCompound) element;
+            final Entry entry = new Entry(ConveyorTray.readFromNbt(nbt.getCompound("data"), false), nbt.getFloat("pos"), 1);
+            entries.add(getInsertIndex(entries, entry, COMPARATOR), entry);
+        }
     }
 
     @Override

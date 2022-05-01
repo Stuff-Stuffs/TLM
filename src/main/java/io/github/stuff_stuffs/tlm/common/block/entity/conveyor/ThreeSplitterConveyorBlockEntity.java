@@ -14,6 +14,8 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.screen.NamedScreenHandlerFactory;
 import net.minecraft.screen.ScreenHandler;
@@ -140,6 +142,44 @@ public class ThreeSplitterConveyorBlockEntity extends BlockEntity implements Upd
         if (diff) {
             createConveyor();
             initialized = false;
+        }
+    }
+
+    @Override
+    protected void writeNbt(final NbtCompound nbt) {
+        final NbtCompound dirMap = new NbtCompound();
+        for (final ConveyorTrayDataStack.State state : ConveyorTrayDataStack.State.values()) {
+            final NbtCompound compound = new NbtCompound();
+            compound.putString("choice", this.dirMap.get(state).name());
+            compound.putBoolean("pop", popMap.get(state));
+            dirMap.put(state.name(), compound);
+        }
+        final NbtCompound empty = new NbtCompound();
+        empty.putString("choice", emptyChoice.name());
+        dirMap.put("empty", empty);
+        nbt.put("choices", dirMap);
+        final NbtCompound conveyor = new NbtCompound();
+        this.conveyor.writeToNbt(conveyor);
+        nbt.put("conveyor", conveyor);
+    }
+
+    @Override
+    public void readNbt(final NbtCompound nbt) {
+        if (nbt.contains("choices")) {
+            final NbtCompound sub = nbt.getCompound("choices");
+            for (final ConveyorTrayDataStack.State state : ConveyorTrayDataStack.State.values()) {
+                final NbtCompound compound = sub.getCompound(state.name());
+                dirMap.put(state, Choice.valueOf(compound.getString("choice")));
+                if (compound.contains("pop", NbtElement.BYTE_TYPE)) {
+                    popMap.put(state, compound.getBoolean("pop"));
+                } else {
+                    popMap.put(state, false);
+                }
+            }
+            emptyChoice = Choice.valueOf(sub.getCompound("empty").getString("choice"));
+        }
+        if (nbt.contains("conveyor")) {
+            conveyor.readFromNbt(nbt.getCompound("conveyor"));
         }
     }
 

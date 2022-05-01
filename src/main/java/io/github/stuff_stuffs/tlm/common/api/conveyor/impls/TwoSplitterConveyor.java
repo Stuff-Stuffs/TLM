@@ -7,6 +7,9 @@ import io.github.stuff_stuffs.tlm.common.api.conveyor.ConveyorLike;
 import io.github.stuff_stuffs.tlm.common.api.resource.ConveyorTray;
 import io.github.stuff_stuffs.tlm.common.util.CollisionUtil;
 import io.github.stuff_stuffs.tlm.common.util.MathUtil;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtList;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
@@ -361,6 +364,36 @@ public class TwoSplitterConveyor implements ConveyorAccess {
             };
         }
         return null;
+    }
+
+    public void writeToNbt(final NbtCompound compound) {
+        compound.put("in", writeToNbt(inEntries));
+        compound.put("out0", writeToNbt(out0Entries));
+        compound.put("out1", writeToNbt(out1Entries));
+    }
+
+    public void readFromNbt(final NbtCompound compound) {
+        readFromNbt(compound.getList("in", NbtElement.COMPOUND_TYPE), inEntries);
+        readFromNbt(compound.getList("out0", NbtElement.COMPOUND_TYPE), out0Entries);
+        readFromNbt(compound.getList("out1", NbtElement.COMPOUND_TYPE), out1Entries);
+    }
+
+    private static NbtList writeToNbt(final List<AbstractConveyor.Entry> entries) {
+        final NbtList list = new NbtList();
+        for (final AbstractConveyor.Entry entry : entries) {
+            final NbtCompound compound = new NbtCompound();
+            compound.put("data", entry.tray.writeToNbt(false));
+            compound.putFloat("pos", entry.getPos());
+        }
+        return list;
+    }
+
+    private static void readFromNbt(final NbtList nbt, final List<AbstractConveyor.Entry> entries) {
+        entries.clear();
+        for (final NbtElement element : nbt) {
+            final NbtCompound compound = (NbtCompound) element;
+            entries.add(new AbstractConveyor.Entry(ConveyorTray.readFromNbt(compound.getCompound("data"), false), compound.getFloat("pos"), 1));
+        }
     }
 
     public void tick(final long tickOrder) {
