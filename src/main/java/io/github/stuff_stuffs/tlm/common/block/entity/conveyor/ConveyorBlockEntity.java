@@ -50,7 +50,7 @@ public class ConveyorBlockEntity extends BlockEntity implements ConveyorSupplier
 
     @Override
     public void update(final Consumer<PacketByteBuf> consumer) {
-        if (conveyor.isSyncNeeded()) {
+        if (world.getTime() % 20 == 0 && conveyor.isSyncNeeded()) {
             final PacketByteBuf buf = PacketByteBufs.create();
             buf.writeByte(CONVEYOR_SYNC);
             conveyor.writeSyncToBuf(buf);
@@ -76,10 +76,10 @@ public class ConveyorBlockEntity extends BlockEntity implements ConveyorSupplier
     public static AbstractConveyor createConveyor(final BlockPos pos, final ConveyorOrientation orientation, final float speed) {
         final Vec3d center = Vec3d.ofCenter(orientation.getInputPos(pos));
         final Vec3d outCenter = Vec3d.ofCenter(orientation.getOutputPos(pos));
-        final Vec3d in = center.withBias(orientation.getInputSide(), -0.5).add(0, -4 / 12.0, 0);
-        final Vec3d out = outCenter.withBias(orientation.getOutputDirection(), -0.5).add(0, -4 / 12.0, 0);
+        final Vec3d in = center.withBias(orientation.getInputSide(), -0.5).add(0, -5 / 16.0, 0);
+        final Vec3d out = outCenter.withBias(orientation.getOutputDirection(), -0.5).add(0, -5 / 16.0, 0);
         if (orientation.getType() == ConveyorOrientation.Type.CLOCKWISE_CORNER || orientation.getType() == ConveyorOrientation.Type.COUNTER_CLOCKWISE_CORNER) {
-            final Vec3d cornerCenter = Vec3d.ofCenter(orientation.getInputPos(pos).offset(orientation.getInputSide().getOpposite())).add(0, -4 / 12.0, 0);
+            final Vec3d cornerCenter = Vec3d.ofCenter(orientation.getInputPos(pos).offset(orientation.getInputSide().getOpposite())).add(0, -5 / 16.0, 0);
             return new MultiSegmentConveyor(speed, orientation.getInputSide(), orientation.getOutputDirection(), List.of(in, cornerCenter, out));
         }
         return SlopeCorrectConveyor.create(speed, orientation.getInputSide(), orientation.getOutputDirection(), in, out);

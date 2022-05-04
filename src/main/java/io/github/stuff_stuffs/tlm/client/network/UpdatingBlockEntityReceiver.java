@@ -27,17 +27,16 @@ public final class UpdatingBlockEntityReceiver {
             final BlockEntityType<?> type = Registry.BLOCK_ENTITY_TYPE.get(buf.readVarInt());
             final BlockPos pos = buf.readBlockPos();
             final int len = buf.readVarInt();
-            bufs.put(new Key(type, pos), PacketByteBufs.readSlice(buf, len));
+            bufs.put(new Key(type, pos), PacketByteBufs.readRetainedSlice(buf, len));
         }
-        buf.retain();
         client.execute(() -> {
             for (final Map.Entry<Key, PacketByteBuf> entry : bufs.entrySet()) {
                 final BlockEntity entity = client.world.getBlockEntity(entry.getKey().pos());
-                if (entity != null && entity.getType() == entry.getKey().type() && entity instanceof UpdatingBlockEntity updating) {
+                if (entity instanceof UpdatingBlockEntity updating && entity.getType() == entry.getKey().type()) {
                     updating.handleUpdate(entry.getValue());
                 }
+                entry.getValue().release();
             }
-            buf.release();
         });
     }
 

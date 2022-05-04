@@ -34,13 +34,11 @@ public final class ConveyorTrayRenderer {
             renderResource(resource, matrices, light, vertexConsumers);
         }
         final VertexConsumer buffer = vertexConsumers.getBuffer(RenderLayer.getEntitySolid(TLM.createId("textures/conveyor/conveyor_tray.png")));
-        matrices.push();
-        matrices.translate(0, 1 / 64.0, 0);
         trayModel.render(matrices, buffer, light, OverlayTexture.DEFAULT_UV);
         final ConveyorTrayDataStack firstStack = tray.getStack(0);
         if (!firstStack.isEmpty()) {
             matrices.push();
-            matrices.translate(3/16.0F, 1 / 16.0F + 0.001F, -6/16.0F);
+            matrices.translate(3 / 16.0F, 1 / 16.0F + 0.001F, -6 / 16.0F);
             matrices.scale(3 / 16.0F, 3 / 16.0F, 3 / 16.0F);
             renderStack(firstStack, matrices, light, vertexConsumers);
             matrices.pop();
@@ -48,12 +46,11 @@ public final class ConveyorTrayRenderer {
         final ConveyorTrayDataStack secondStack = tray.getStack(1);
         if (!secondStack.isEmpty()) {
             matrices.push();
-            matrices.translate(-1/16.0F, 1 / 16.0F + 0.001F, -6/16.0F);
+            matrices.translate(-1 / 16.0F, 1 / 16.0F + 0.001F, -6 / 16.0F);
             matrices.scale(3 / 16.0F, 3 / 16.0F, 3 / 16.0F);
             renderStack(secondStack, matrices, light, vertexConsumers);
             matrices.pop();
         }
-        matrices.pop();
     }
 
     private static void renderStack(final ConveyorTrayDataStack stack, final MatrixStack matrices, final int light, final VertexConsumerProvider vertexConsumers) {

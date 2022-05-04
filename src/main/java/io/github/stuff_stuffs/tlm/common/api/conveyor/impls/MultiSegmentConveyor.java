@@ -21,9 +21,9 @@ public class MultiSegmentConveyor extends AbstractSyncingConveyor {
     private final List<LineSegment> segments;
     private final float length;
     private final Cache cache;
-    private Supplier<@Nullable ConveyorLike> inGetter;
-    private Supplier<@Nullable ConveyorLike> outGetter;
-    private Supplier<@Nullable Conveyor> outputGetter;
+    private Supplier<@Nullable ConveyorLike> inGetter = () -> null;
+    private Supplier<@Nullable ConveyorLike> outGetter = () -> null;
+    private Supplier<@Nullable Conveyor> outputGetter = () -> null;
 
     public MultiSegmentConveyor(final float speed, final Direction insertSide, final Direction outSide, final List<Vec3d> segmentPoints) {
         super(speed);

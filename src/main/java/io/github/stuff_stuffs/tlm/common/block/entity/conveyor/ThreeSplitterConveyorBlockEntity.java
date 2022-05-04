@@ -1,5 +1,6 @@
 package io.github.stuff_stuffs.tlm.common.block.entity.conveyor;
 
+import io.github.stuff_stuffs.tlm.client.network.UpdatingBlockEntityReceiver;
 import io.github.stuff_stuffs.tlm.common.TLM;
 import io.github.stuff_stuffs.tlm.common.api.UpdatingBlockEntity;
 import io.github.stuff_stuffs.tlm.common.api.conveyor.*;
@@ -242,7 +243,7 @@ public class ThreeSplitterConveyorBlockEntity extends BlockEntity implements Upd
             conveyor.initialized = true;
         }
         conveyor.conveyor.tick(TLM.getTickOrder());
-        if(conveyor.conveyor.isSyncNeeded()) {
+        if (conveyor.conveyor.isSyncNeeded()) {
             conveyor.markDirty();
         }
     }

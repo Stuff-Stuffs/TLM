@@ -45,11 +45,11 @@ public class TwoSplitterConveyor implements ConveyorAccess {
     private long lastTicked = Long.MIN_VALUE;
     private Decider decider;
     private boolean syncNeeded = false;
-    private Supplier<ConveyorLike> inputConveyorLikeCache;
-    private Supplier<ConveyorLike> output0ConveyorLikeCache;
-    private Supplier<Conveyor> output0ConveyorCache;
-    private Supplier<ConveyorLike> output1ConveyorLikeCache;
-    private Supplier<Conveyor> output1ConveyorCache;
+    private Supplier<ConveyorLike> inputConveyorLikeCache = () -> null;
+    private Supplier<ConveyorLike> output0ConveyorLikeCache = () -> null;
+    private Supplier<Conveyor> output0ConveyorCache = () -> null;
+    private Supplier<ConveyorLike> output1ConveyorLikeCache = () -> null;
+    private Supplier<Conveyor> output1ConveyorCache = () -> null;
 
     public TwoSplitterConveyor(final float speed, final Direction facing, final BlockPos pos, final Decider decider) {
         this.speed = speed;
@@ -58,7 +58,7 @@ public class TwoSplitterConveyor implements ConveyorAccess {
         inSide = facing;
         out0Side = inSide.rotateYClockwise();
         out1Side = inSide.rotateYCounterclockwise();
-        center = Vec3d.ofCenter(pos).add(0, -4 / 12.0, 0);
+        center = Vec3d.ofCenter(pos).add(0, -4 / 16.0, 0);
         start = center.withBias(inSide, 0.5);
         startDelta = center.subtract(start);
         startLength = 0.5F;

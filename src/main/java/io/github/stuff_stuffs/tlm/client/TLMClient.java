@@ -134,7 +134,7 @@ public class TLMClient implements ClientModInitializer {
                     final BakedModel model = itemRenderer.getModel(stack, client.world, null, 42);
                     if (model.hasDepth()) {
                         matrices.push();
-                        matrices.translate(3.0 / 32.0, -1 / 16.0, 3.0 / 32.0);
+                        matrices.translate(3.0 / 32.0, -2/16.0, 3.0 / 32.0);
                         matrices.scale(2.25F, 2.25F, 2.25F);
                         itemRenderer.renderItem(stack, ModelTransformation.Mode.GROUND, light, OverlayTexture.DEFAULT_UV, matrices, vertexConsumers, 42);
                         matrices.pop();

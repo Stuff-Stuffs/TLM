@@ -106,6 +106,7 @@ public abstract class AbstractConveyor implements ConveyorAccess {
                 } else {
                     final int index = getInsertIndex(entries, entry, COMPARATOR);
                     entries.add(index, entry);
+                    updatePosition(entry, false);
                     syncNeeded = true;
                 }
                 yield true;
@@ -154,7 +155,7 @@ public abstract class AbstractConveyor implements ConveyorAccess {
     protected boolean moveIteration(final float maxPos, final Entry entry, final int next, final long tickOrder) {
         if (entry.tickRemaining <= 0) {
             updatePosition(entry, false);
-            entry.tickRemaining = 1;
+            entry.tickRemaining = -1;
             return true;
         }
         final float movement = entry.tickRemaining * speed;

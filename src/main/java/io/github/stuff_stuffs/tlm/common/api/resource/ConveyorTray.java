@@ -1,6 +1,7 @@
 package io.github.stuff_stuffs.tlm.common.api.resource;
 
 import io.github.stuff_stuffs.tlm.common.TLM;
+import io.github.stuff_stuffs.tlm.common.block.entity.conveyor.ConveyorBlockEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.util.Identifier;
@@ -15,6 +16,7 @@ public final class ConveyorTray {
     public static final int STACK_COUNT = 2;
     private final ConveyorTrayDataStack firstStack;
     private final ConveyorTrayDataStack secondStack;
+    private Vec3d delta = null;
     private ConveyedResource<?, ?> resource;
     private ConveyedResourceType<?, ?> last = null;
     private Vec3d lastPos = Vec3d.ZERO;
@@ -47,6 +49,10 @@ public final class ConveyorTray {
             lastPos = currentPos;
         }
         currentPos = pos;
+        if (delta != null) {
+            lastPos = currentPos.add(delta);
+            delta = null;
+        }
     }
 
     public ConveyorTrayDataStack getStack(final int index) {
@@ -116,6 +122,12 @@ public final class ConveyorTray {
         }
         compound.put("firstStack", client ? firstStack.writeToClientNbt() : firstStack.writeToNbt());
         compound.put("secondStack", client ? secondStack.writeToClientNbt() : secondStack.writeToNbt());
+        if (client) {
+            final Vec3d delta = lastPos.subtract(currentPos);
+            compound.putDouble("dX", delta.x);
+            compound.putDouble("dY", delta.y);
+            compound.putDouble("dZ", delta.z);
+        }
         return compound;
     }
 
@@ -136,6 +148,7 @@ public final class ConveyorTray {
         } else {
             secondStack.readFromNbt(compound.getCompound("secondStack"));
         }
+        final ConveyorTray tray;
         if (compound.contains("resource", NbtElement.COMPOUND_TYPE) && compound.contains("type", NbtElement.STRING_TYPE)) {
             final NbtCompound encoded = compound.getCompound("resource");
             final Identifier typeId = new Identifier(compound.getString("type"));
@@ -144,9 +157,13 @@ public final class ConveyorTray {
                 TLM.LOGGER.error("Error while decoding conveyed resource with type {}, replacing with empty", typeId);
                 return new ConveyorTray();
             }
-            return new ConveyorTray(ConveyedResource.readFromNbt(encoded), firstStack, secondStack);
+            tray = new ConveyorTray(ConveyedResource.readFromNbt(encoded), firstStack, secondStack);
         } else {
-            return new ConveyorTray(firstStack, secondStack);
+            tray = new ConveyorTray(firstStack, secondStack);
         }
+        if (client) {
+            tray.delta = new Vec3d(compound.getDouble("dX"), compound.getDouble("dY"), compound.getDouble("dZ"));
+        }
+        return tray;
     }
 }

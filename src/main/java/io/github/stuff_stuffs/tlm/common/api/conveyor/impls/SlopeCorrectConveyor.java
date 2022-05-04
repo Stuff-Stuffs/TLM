@@ -22,9 +22,9 @@ public class SlopeCorrectConveyor extends AbstractSyncingConveyor {
     private final float slope;
     private final float length;
     private final Cache cache;
-    private Supplier<@Nullable ConveyorLike> inGetter;
-    private Supplier<@Nullable ConveyorLike> outGetter;
-    private Supplier<@Nullable Conveyor> outputGetter;
+    private Supplier<@Nullable ConveyorLike> inGetter = () -> null;
+    private Supplier<@Nullable ConveyorLike> outGetter = () -> null;
+    private Supplier<@Nullable Conveyor> outputGetter = () -> null;
 
     private SlopeCorrectConveyor(final float speed, final Direction insertSide, final Direction outSide, final Vec3d start, final Vec3d flat, final float slope, final float length, final float stretch) {
         super(speed * stretch);
