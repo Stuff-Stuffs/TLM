@@ -1,6 +1,7 @@
 package io.github.stuff_stuffs.tlm.common;
 
 import io.github.stuff_stuffs.tlm.common.api.UpdatingBlockEntity;
+import io.github.stuff_stuffs.tlm.common.api.conveyor.ConveyorApi;
 import io.github.stuff_stuffs.tlm.common.api.resource.ConveyedResourceType;
 import io.github.stuff_stuffs.tlm.common.block.TLMBlocks;
 import io.github.stuff_stuffs.tlm.common.item.TLMItems;
@@ -29,6 +30,7 @@ public class TLM implements ModInitializer {
         TLMBlocks.init();
         TLMItems.init();
         TLMScreenHandlerTypes.init();
+        ConveyorApi.init();
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             UPDATING_BLOCK_ENTITIES.forEach(b -> b.update(buf -> UpdatingBlockEntitySender.send((BlockEntity) b, buf)));
             tickOrder++;

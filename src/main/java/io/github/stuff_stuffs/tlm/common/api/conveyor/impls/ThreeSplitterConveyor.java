@@ -422,6 +422,9 @@ public class ThreeSplitterConveyor implements ConveyorAccess {
                 entryCount = entryCount - 1;
             }
         }
+        if (entries.removeIf(entry -> entry.getTray().getResource().isEmpty())) {
+            syncNeeded = true;
+        }
     }
 
     private boolean moveIteration(final float maxPos, final List<AbstractConveyor.Entry> entries, final AbstractConveyor.Entry entry, final Branch branch, final int next, final long tickOrder) {

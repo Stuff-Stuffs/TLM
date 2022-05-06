@@ -422,6 +422,9 @@ public class TwoSplitterConveyor implements ConveyorAccess {
                 entryCount = entryCount - 1;
             }
         }
+        if (entries.removeIf(entry -> entry.getTray().getResource().isEmpty())) {
+            syncNeeded = true;
+        }
     }
 
     private boolean tryAdvance(final Branch branch, final AbstractConveyor.Entry entry, final float tickUsed, final long tickOrder) {

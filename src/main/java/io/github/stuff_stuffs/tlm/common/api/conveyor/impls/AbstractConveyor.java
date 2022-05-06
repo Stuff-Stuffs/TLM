@@ -202,6 +202,9 @@ public abstract class AbstractConveyor implements ConveyorAccess {
                 entryCount = entryCount - 1;
             }
         }
+        if (entries.removeIf(entry -> entry.getTray().getResource().isEmpty())) {
+            syncNeeded = true;
+        }
         lastTicked = tickOrder;
     }
 
